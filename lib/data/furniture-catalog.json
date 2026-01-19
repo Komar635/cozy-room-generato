@@ -1,0 +1,69 @@
+{
+  "furniture": [
+    {
+      "id": "sofa_001",
+      "name": "Диван угловой Скандинавия",
+      "category": "furniture",
+      "price": 45000,
+      "style": ["scandinavian", "modern"],
+      "dimensions": { "width": 2.4, "height": 0.8, "depth": 1.6 },
+      "color": "#F5F5DC",
+      "description": "Удобный угловой диван в скандинавском стиле",
+      "tags": ["диван", "угловой", "светлый", "ткань"],
+      "roomSizeMin": 12,
+      "budgetCategory": "medium"
+    },
+    {
+      "id": "table_001", 
+      "name": "Журнальный столик Лофт",
+      "category": "furniture",
+      "price": 12000,
+      "style": ["loft", "modern"],
+      "dimensions": { "width": 1.2, "height": 0.4, "depth": 0.6 },
+      "color": "#8B4513",
+      "description": "Стильный журнальный столик из дерева и металла",
+      "tags": ["стол", "журнальный", "дерево", "металл"],
+      "roomSizeMin": 8,
+      "budgetCategory": "low"
+    },
+    {
+      "id": "chair_001",
+      "name": "Кресло Классик",
+      "category": "furniture", 
+      "price": 25000,
+      "style": ["classic", "modern"],
+      "dimensions": { "width": 0.8, "height": 1.1, "depth": 0.9 },
+      "color": "#DEB887",
+      "description": "Элегантное кресло в классическом стиле",
+      "tags": ["кресло", "классика", "кожа"],
+      "roomSizeMin": 6,
+      "budgetCategory": "medium"
+    },
+    {
+      "id": "lamp_001",
+      "name": "Торшер Минимализм",
+      "category": "lighting",
+      "price": 8000,
+      "style": ["minimalist", "modern"],
+      "dimensions": { "width": 0.3, "height": 1.6, "depth": 0.3 },
+      "color": "#FFFFFF",
+      "description": "Стильный торшер в стиле минимализм",
+      "tags": ["торшер", "свет", "белый"],
+      "roomSizeMin": 4,
+      "budgetCategory": "low"
+    },
+    {
+      "id": "plant_001",
+      "name": "Фикус Бенджамина",
+      "category": "plants",
+      "price": 3500,
+      "style": ["scandinavian", "modern", "minimalist"],
+      "dimensions": { "width": 0.4, "height": 1.2, "depth": 0.4 },
+      "color": "#228B22",
+      "description": "Живое растение для уюта в доме",
+      "tags": ["растение", "зеленый", "живой"],
+      "roomSizeMin": 3,
+      "budgetCategory": "low"
+    }
+  ]
+}

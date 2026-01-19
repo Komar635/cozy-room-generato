@@ -1,0 +1,103 @@
+'use client'
+
+import { useRoomStore } from '@/store/room-store'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+export default function RoomInfo() {
+  const { roomDimensions } = useRoomStore()
+  const { width, height, depth } = roomDimensions
+
+  // Расчеты
+  const floorArea = width * depth
+  const wallArea = 2 * (width * height + depth * height)
+  const totalArea = floorArea + wallArea + floorArea // пол + стены + потолок
+  const volume = width * height * depth
+  const perimeter = 2 * (width + depth)
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-lg">Информация о комнате</CardTitle>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          {/* Основные размеры */}
+          <div className="space-y-2">
+            <h4 className="font-medium text-muted-foreground">Размеры</h4>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span>Ширина:</span>
+                <span className="font-mono">{width.toFixed(1)} м</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Высота:</span>
+                <span className="font-mono">{height.toFixed(1)} м</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Глубина:</span>
+                <span className="font-mono">{depth.toFixed(1)} м</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Расчетные параметры */}
+          <div className="space-y-2">
+            <h4 className="font-medium text-muted-foreground">Параметры</h4>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span>Площадь пола:</span>
+                <span className="font-mono">{floorArea.toFixed(1)} м²</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Объем:</span>
+                <span className="font-mono">{volume.toFixed(1)} м³</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Периметр:</span>
+                <span className="font-mono">{perimeter.toFixed(1)} м</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Дополнительная информация */}
+          <div className="col-span-2 space-y-2 pt-2 border-t">
+            <h4 className="font-medium text-muted-foreground">Дополнительно</h4>
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span>Площадь стен:</span>
+                <span className="font-mono">{wallArea.toFixed(1)} м²</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Общая площадь:</span>
+                <span className="font-mono">{totalArea.toFixed(1)} м²</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Рекомендации */}
+          <div className="col-span-2 pt-2 border-t">
+            <h4 className="font-medium text-muted-foreground mb-2">Рекомендации</h4>
+            <div className="text-xs text-muted-foreground space-y-1">
+              {floorArea < 10 && (
+                <p className="text-orange-600">• Небольшая комната - рекомендуется минималистичный дизайн</p>
+              )}
+              {floorArea >= 10 && floorArea < 25 && (
+                <p className="text-blue-600">• Средняя комната - подходит для большинства стилей</p>
+              )}
+              {floorArea >= 25 && (
+                <p className="text-green-600">• Просторная комната - можно использовать крупную мебель</p>
+              )}
+              {height < 2.5 && (
+                <p className="text-orange-600">• Низкие потолки - избегайте высокой мебели</p>
+              )}
+              {height >= 3.5 && (
+                <p className="text-green-600">• Высокие потолки - можно использовать вертикальные элементы</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
