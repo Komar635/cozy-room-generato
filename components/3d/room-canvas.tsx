@@ -6,6 +6,8 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRoomStore } from '@/store/room-store'
 import { FurnitureItem, Vector3 } from '@/types/room'
 import { getOptimalCameraPosition, getOptimalCameraTarget, getDevicePerformanceLevel, getQualitySettings } from '@/lib/three-utils'
+import { FurnitureManager } from './furniture-manager'
+import { DropZone } from './drop-zone'
 import * as THREE from 'three'
 
 interface RoomCanvasProps {
@@ -101,95 +103,46 @@ function Room() {
 
 // Компонент для управления камерой и орбитальных контролов
 function CameraController() {
-  const { camera, size } = useThree()
   const { roomDimensions } = useRoomStore()
-  const controlsRef = useRef<any>()
-  
-  useEffect(() => {
-    // Адаптивное позиционирование камеры в зависимости от размеров комнаты
-    const optimalPosition = getOptimalCameraPosition(roomDimensions)
-    const optimalTarget = getOptimalCameraTarget(roomDimensions)
-    
-    camera.position.set(optimalPosition.x, optimalPosition.y, optimalPosition.z)
-    camera.lookAt(optimalTarget.x, optimalTarget.y, optimalTarget.z)
-    
-    // Обновляем контролы
-    if (controlsRef.current) {
-      controlsRef.current.target.set(optimalTarget.x, optimalTarget.y, optimalTarget.z)
-      controlsRef.current.update()
-    }
-  }, [camera, roomDimensions])
-  
-  // Адаптивный рендеринг для разных размеров экрана
-  useEffect(() => {
-    const aspect = size.width / size.height
-    if (camera instanceof THREE.PerspectiveCamera) {
-      camera.aspect = aspect
-      camera.updateProjectionMatrix()
-    }
-  }, [camera, size])
-  
-  const maxDimension = Math.max(roomDimensions.width, roomDimensions.depth, roomDimensions.height)
-  const target = getOptimalCameraTarget(roomDimensions)
   
   return (
-    <OrbitControls 
-      ref={controlsRef}
-      enablePan={true} 
-      enableZoom={true} 
-      enableRotate={true}
-      minDistance={Math.max(maxDimension * 0.5, 3)}
-      maxDistance={Math.max(maxDimension * 3, 50)}
-      target={[target.x, target.y, target.z]}
+    <OrbitControls
+      makeDefault
       enableDamping={true}
       dampingFactor={0.05}
-      autoRotate={false}
-      makeDefault={true}
-      // Ограничения для более удобной навигации
-      maxPolarAngle={Math.PI * 0.9} // Не позволяем камере заходить под пол
-      minPolarAngle={Math.PI * 0.1}  // Не позволяем смотреть сверху вниз
+      minDistance={2}
+      maxDistance={50}
+      maxPolarAngle={Math.PI / 2 - 0.1}
+      target={[0, roomDimensions.height / 2, 0]}
+      enableZoom={true}
+      enableRotate={true}
+      enablePan={true}
+      zoomSpeed={1.0}
+      rotateSpeed={1.0}
+      panSpeed={1.0}
     />
   )
 }
 
 // Компонент освещения сцены
 function SceneLighting() {
-  const { roomDimensions } = useRoomStore()
-  const [qualitySettings, setQualitySettings] = useState(getQualitySettings('medium'))
-  
-  useEffect(() => {
-    const performanceLevel = getDevicePerformanceLevel()
-    setQualitySettings(getQualitySettings(performanceLevel))
-  }, [])
-  
   return (
     <>
       {/* Основное освещение */}
-      <ambientLight intensity={0.4} color="#ffffff" />
+      <ambientLight intensity={0.6} color="#ffffff" />
       
-      {/* Направленный свет (имитация солнца) */}
+      {/* Направленный свет */}
       <directionalLight 
-        position={[roomDimensions.width, roomDimensions.height * 1.5, roomDimensions.depth]} 
+        position={[5, 10, 5]} 
         intensity={0.8}
         color="#ffffff"
-        castShadow
-        shadow-mapSize-width={qualitySettings.shadowMapSize}
-        shadow-mapSize-height={qualitySettings.shadowMapSize}
-        shadow-camera-near={0.5}
-        shadow-camera-far={50}
-        shadow-camera-left={-roomDimensions.width}
-        shadow-camera-right={roomDimensions.width}
-        shadow-camera-top={roomDimensions.depth}
-        shadow-camera-bottom={-roomDimensions.depth}
       />
       
       {/* Дополнительное мягкое освещение */}
       <pointLight 
-        position={[0, roomDimensions.height * 0.8, 0]} 
+        position={[0, 5, 0]} 
         intensity={0.3}
         color="#fff8e1"
-        distance={roomDimensions.width * 2}
-        decay={2}
       />
     </>
   )
@@ -197,12 +150,9 @@ function SceneLighting() {
 
 // Компонент сетки пола
 function FloorGrid() {
-  const { roomDimensions } = useRoomStore()
-  const maxDimension = Math.max(roomDimensions.width, roomDimensions.depth)
-  
   return (
     <Grid 
-      args={[maxDimension * 2, maxDimension * 2]} 
+      args={[20, 20]} 
       position={[0, -0.001, 0]} 
       cellSize={0.5} 
       cellThickness={0.5} 
@@ -210,7 +160,7 @@ function FloorGrid() {
       sectionSize={1} 
       sectionThickness={1} 
       sectionColor="#bdbdbd" 
-      fadeDistance={maxDimension * 1.5} 
+      fadeDistance={15} 
       fadeStrength={1} 
       followCamera={false} 
       infiniteGrid={false}
@@ -233,6 +183,19 @@ function SceneContent({ onItemSelect, onItemMove }: RoomCanvasProps) {
       
       {/* Комната */}
       <Room />
+      
+      {/* Зона для drag & drop */}
+      <DropZone onItemDrop={(item, position) => {
+        if (onItemMove) {
+          onItemMove(item.id, position)
+        }
+      }} />
+      
+      {/* Менеджер мебели */}
+      <FurnitureManager
+        onItemSelect={onItemSelect}
+        onItemMove={onItemMove}
+      />
       
       {/* Окружение для реалистичного освещения */}
       <Environment preset="apartment" />
@@ -258,42 +221,45 @@ export default function RoomCanvas({
   onItemMove, 
   className = "w-full h-full min-h-[400px]" 
 }: RoomCanvasProps) {
-  const { roomDimensions } = useRoomStore()
   const [isClient, setIsClient] = useState(false)
-  const [qualitySettings, setQualitySettings] = useState(getQualitySettings('medium'))
   
   // Проверяем, что мы на клиенте (избегаем SSR проблем)
   useEffect(() => {
     setIsClient(true)
-    
-    // Определяем производительность устройства и настраиваем качество
-    const performanceLevel = getDevicePerformanceLevel()
-    setQualitySettings(getQualitySettings(performanceLevel))
   }, [])
   
   if (!isClient) {
     return <LoadingFallback />
   }
   
-  const optimalPosition = getOptimalCameraPosition(roomDimensions)
-  
   return (
-    <div className={className}>
+    <div className={className} style={{ touchAction: 'none' }}>
       <Canvas
         camera={{ 
-          position: [optimalPosition.x, optimalPosition.y, optimalPosition.z],
-          fov: 60,
+          position: [10, 8, 10],
+          fov: 50,
           near: 0.1,
           far: 1000
         }}
-        shadows
+        shadows={false}
         style={{ width: '100%', height: '100%' }}
         gl={{ 
-          antialias: qualitySettings.antialias,
+          antialias: false,
           alpha: false,
-          powerPreference: "high-performance"
+          powerPreference: "default"
         }}
-        dpr={[1, qualitySettings.dpr]} // Адаптивное разрешение для производительности
+        dpr={1}
+        events={(store) => ({
+          priority: 1,
+          enabled: true,
+          compute: (event, state) => {
+            state.pointer.set(
+              (event.offsetX / state.size.width) * 2 - 1,
+              -(event.offsetY / state.size.height) * 2 + 1
+            )
+            state.raycaster.setFromCamera(state.pointer, state.camera)
+          }
+        })}
       >
         <Suspense fallback={null}>
           <SceneContent 

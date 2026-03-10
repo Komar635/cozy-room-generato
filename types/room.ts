@@ -31,6 +31,14 @@ export enum RoomStyle {
   MINIMALIST = 'minimalist'
 }
 
+// Размерные категории для фильтрации
+export enum SizeCategory {
+  SMALL = 'small',
+  MEDIUM = 'medium', 
+  LARGE = 'large',
+  EXTRA_LARGE = 'extra_large'
+}
+
 // Предмет мебели
 export interface FurnitureItem {
   id: string

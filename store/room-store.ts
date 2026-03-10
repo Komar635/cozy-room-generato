@@ -78,8 +78,30 @@ export const useRoomStore = create<AppState>((set, get) => ({
   
   // Действия для мебели
   addFurniture: (item) => set((state) => {
+    // Проверяем, можно ли добавить предмет
+    if (!state.canAddItem(item.price)) {
+      // Добавляем уведомление о блокировке
+      state.addNotification({
+        type: 'error',
+        title: 'Превышение бюджета',
+        message: `Нельзя добавить "${item.name}". Превышение бюджета более чем на 10 000 ₽`
+      })
+      return state // Не добавляем предмет
+    }
+    
     const newFurniture = [...state.furniture, item]
     const newSpentAmount = newFurniture.reduce((sum, f) => sum + f.price, 0)
+    
+    // Проверяем статус бюджета после добавления
+    const overspend = newSpentAmount - state.budget
+    if (overspend > 0 && overspend <= 10000) {
+      // Предупреждение о входе в буферную зону
+      state.addNotification({
+        type: 'warning',
+        title: 'Предупреждение о бюджете',
+        message: `Добавлен "${item.name}". Превышение бюджета на ${overspend.toLocaleString('ru-RU')} ₽`
+      })
+    }
     
     return {
       furniture: newFurniture,
@@ -168,6 +190,7 @@ export const useRoomStore = create<AppState>((set, get) => ({
       // Уведомление об успешном сохранении
       get().addNotification({
         type: 'success',
+        title: 'Успешно',
         message: 'Проект успешно сохранен'
       })
     } catch (error) {
@@ -179,6 +202,7 @@ export const useRoomStore = create<AppState>((set, get) => ({
       
       get().addNotification({
         type: 'warning',
+        title: 'Предупреждение',
         message: 'Проект сохранен локально (нет подключения к серверу)'
       })
     }

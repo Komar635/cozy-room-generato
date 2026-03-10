@@ -1,4 +1,4 @@
-import { RoomDimensions, RoomProject } from '@/types/room'
+import { RoomDimensions, RoomProject } from '../../types/room'
 
 export class RoomApiService {
   private static baseUrl = '/api/room'

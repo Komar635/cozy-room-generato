@@ -1,0 +1,32 @@
+{
+  "name": "supabase-furniture-parser",
+  "version": "1.0.0",
+  "description": "Парсер цен на мебель с сохранением в Supabase (TypeScript)",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "npm run build && node dist/index.js --test",
+    "manual": "npm run build && node dist/index.js --manual",
+    "stats": "npm run build && node dist/index.js --stats"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "puppeteer": "^21.0.0",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.3.0",
+    "node-cron": "^3.0.3",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/node-cron": "^3.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "keywords": ["parser", "furniture", "prices", "russia", "supabase", "typescript"],
+  "author": "Room Designer Team",
+  "license": "MIT"
+}

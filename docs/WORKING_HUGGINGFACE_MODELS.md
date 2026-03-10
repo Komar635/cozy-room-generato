@@ -18,7 +18,7 @@
 
 ### 3. **dreamlike-art/dreamlike-diffusion-1.0** ✅
 - **Ссылка:** https://huggingface.co/dreamlike-art/dreamlike-diffusion-1.0
-- **API:** `https://api-inference.huggingface.co/models/dreamlike-art/dreamlike-diffusion-1.0`
+- **API:** `https://api-inference.huggingface.co/modМнеels/dreamlike-art/dreamlike-diffusion-1.0`
 - **Статус:** Специально для интерьеров
 
 ### 4. **Lykon/DreamShaper** ✅

@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 
 export default function Home() {
   return (
@@ -14,10 +14,15 @@ export default function Home() {
           </p>
           
           {/* Навигация */}
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/room">
               <Button size="lg">
                 🏠 Создать комнату
+              </Button>
+            </Link>
+            <Link href="/furniture-demo">
+              <Button size="lg" className="bg-green-600 hover:bg-green-700">
+                🪑 Демо размещения мебели
               </Button>
             </Link>
             <Link href="/setup">

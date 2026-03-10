@@ -1,116 +1,13 @@
-import { FurnitureItem, FurnitureCategory, RoomStyle, Vector3 } from '../types/room'
-import { generateId } from './three-utils'
+import { FurnitureItem, FurnitureCategory, RoomStyle } from '../types/room'
 
-// Создание нового предмета мебели
-export const createFurnitureItem = (
-  name: string,
-  category: FurnitureCategory,
-  price: number,
-  dimensions: { width: number; height: number; depth: number },
-  options: {
-    position?: Vector3
-    rotation?: Vector3
-    modelUrl?: string
-    thumbnailUrl?: string
-    style?: RoomStyle[]
-    color?: string
-  } = {}
-): FurnitureItem => ({
-  id: generateId(),
-  name,
-  category,
-  price,
-  dimensions,
-  position: options.position || { x: 0, y: 0, z: 0 },
-  rotation: options.rotation || { x: 0, y: 0, z: 0 },
-  modelUrl: options.modelUrl || '',
-  thumbnailUrl: options.thumbnailUrl || '',
-  style: options.style || [RoomStyle.MODERN],
-  color: options.color || '#ffffff'
-})
+/**
+ * Утилиты для работы с мебелью
+ */
 
-// Фильтрация мебели по категории
-export const filterByCategory = (
-  furniture: FurnitureItem[], 
-  category: FurnitureCategory
-): FurnitureItem[] => {
-  return furniture.filter(item => item.category === category)
-}
-
-// Фильтрация мебели по стилю
-export const filterByStyle = (
-  furniture: FurnitureItem[], 
-  style: RoomStyle
-): FurnitureItem[] => {
-  return furniture.filter(item => item.style.includes(style))
-}
-
-// Фильтрация мебели по ценовому диапазону
-export const filterByPriceRange = (
-  furniture: FurnitureItem[], 
-  minPrice: number, 
-  maxPrice: number
-): FurnitureItem[] => {
-  return furniture.filter(item => item.price >= minPrice && item.price <= maxPrice)
-}
-
-// Поиск мебели по названию
-export const searchByName = (
-  furniture: FurnitureItem[], 
-  query: string
-): FurnitureItem[] => {
-  const lowerQuery = query.toLowerCase()
-  return furniture.filter(item => 
-    item.name.toLowerCase().includes(lowerQuery)
-  )
-}
-
-// Сортировка мебели
-export const sortFurniture = (
-  furniture: FurnitureItem[], 
-  sortBy: 'name' | 'price' | 'category',
-  order: 'asc' | 'desc' = 'asc'
-): FurnitureItem[] => {
-  return [...furniture].sort((a, b) => {
-    let comparison = 0
-    
-    switch (sortBy) {
-      case 'name':
-        comparison = a.name.localeCompare(b.name)
-        break
-      case 'price':
-        comparison = a.price - b.price
-        break
-      case 'category':
-        comparison = a.category.localeCompare(b.category)
-        break
-    }
-    
-    return order === 'asc' ? comparison : -comparison
-  })
-}
-
-// Получение статистики по категориям
-export const getCategoryStats = (furniture: FurnitureItem[]) => {
-  const stats: Record<FurnitureCategory, { count: number; totalPrice: number }> = {
-    [FurnitureCategory.FURNITURE]: { count: 0, totalPrice: 0 },
-    [FurnitureCategory.TEXTILE]: { count: 0, totalPrice: 0 },
-    [FurnitureCategory.DECOR]: { count: 0, totalPrice: 0 },
-    [FurnitureCategory.LIGHTING]: { count: 0, totalPrice: 0 },
-    [FurnitureCategory.PLANTS]: { count: 0, totalPrice: 0 },
-    [FurnitureCategory.APPLIANCES]: { count: 0, totalPrice: 0 }
-  }
-  
-  furniture.forEach(item => {
-    stats[item.category].count++
-    stats[item.category].totalPrice += item.price
-  })
-  
-  return stats
-}
-
-// Форматирование цены в рублях
-export const formatPrice = (price: number): string => {
+/**
+ * Форматирование цены в рублях
+ */
+export function formatPrice(price: number): string {
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency',
     currency: 'RUB',
@@ -119,38 +16,237 @@ export const formatPrice = (price: number): string => {
   }).format(price)
 }
 
-// Расчет процента от бюджета
-export const calculateBudgetPercentage = (spent: number, budget: number): number => {
-  if (budget === 0) return 0
-  return Math.round((spent / budget) * 100)
+/**
+ * Форматирование размеров мебели
+ */
+export function formatDimensions(dimensions: { width: number; height: number; depth: number }): string {
+  const { width, height, depth } = dimensions
+  return `${width}×${height}×${depth} м`
 }
 
-// Получение рекомендуемого бюджета для категории
-export const getRecommendedCategoryBudget = (
-  totalBudget: number, 
-  category: FurnitureCategory
-): number => {
-  const budgetDistribution: Record<FurnitureCategory, number> = {
-    [FurnitureCategory.FURNITURE]: 0.6,    // 60% - основная мебель
-    [FurnitureCategory.LIGHTING]: 0.15,    // 15% - освещение
-    [FurnitureCategory.TEXTILE]: 0.1,      // 10% - текстиль
-    [FurnitureCategory.DECOR]: 0.08,       // 8% - декор
-    [FurnitureCategory.APPLIANCES]: 0.05,  // 5% - техника
-    [FurnitureCategory.PLANTS]: 0.02       // 2% - растения
-  }
-  
-  return Math.round(totalBudget * budgetDistribution[category])
+/**
+ * Вычисление площади предмета (для размещения)
+ */
+export function calculateFootprint(item: FurnitureItem): number {
+  return item.dimensions.width * item.dimensions.depth
 }
 
-// Проверка совместимости стилей
-export const areStylesCompatible = (style1: RoomStyle, style2: RoomStyle): boolean => {
-  const compatibilityMatrix: Record<RoomStyle, RoomStyle[]> = {
-    [RoomStyle.SCANDINAVIAN]: [RoomStyle.SCANDINAVIAN, RoomStyle.MINIMALIST, RoomStyle.MODERN],
-    [RoomStyle.LOFT]: [RoomStyle.LOFT, RoomStyle.MODERN],
-    [RoomStyle.CLASSIC]: [RoomStyle.CLASSIC],
-    [RoomStyle.MODERN]: [RoomStyle.MODERN, RoomStyle.MINIMALIST, RoomStyle.SCANDINAVIAN, RoomStyle.LOFT],
-    [RoomStyle.MINIMALIST]: [RoomStyle.MINIMALIST, RoomStyle.MODERN, RoomStyle.SCANDINAVIAN]
+/**
+ * Вычисление объема предмета
+ */
+export function calculateVolume(item: FurnitureItem): number {
+  const { width, height, depth } = item.dimensions
+  return width * height * depth
+}
+
+/**
+ * Проверка совместимости предмета со стилем
+ */
+export function isCompatibleWithStyle(item: FurnitureItem, style: RoomStyle): boolean {
+  return item.style.includes(style)
+}
+
+/**
+ * Получение основного стиля предмета
+ */
+export function getPrimaryStyle(item: FurnitureItem): RoomStyle {
+  return item.style[0] || RoomStyle.MODERN
+}
+
+/**
+ * Группировка предметов по категориям
+ */
+export function groupByCategory(items: FurnitureItem[]): Record<FurnitureCategory, FurnitureItem[]> {
+  const groups = {} as Record<FurnitureCategory, FurnitureItem[]>
+  
+  // Инициализируем все категории пустыми массивами
+  Object.values(FurnitureCategory).forEach(category => {
+    groups[category] = []
+  })
+  
+  // Группируем предметы
+  items.forEach(item => {
+    groups[item.category].push(item)
+  })
+  
+  return groups
+}
+
+/**
+ * Группировка предметов по стилям
+ */
+export function groupByStyle(items: FurnitureItem[]): Record<RoomStyle, FurnitureItem[]> {
+  const groups = {} as Record<RoomStyle, FurnitureItem[]>
+  
+  // Инициализируем все стили пустыми массивами
+  Object.values(RoomStyle).forEach(style => {
+    groups[style] = []
+  })
+  
+  // Группируем предметы (предмет может быть в нескольких группах)
+  items.forEach(item => {
+    item.style.forEach(style => {
+      groups[style].push(item)
+    })
+  })
+  
+  return groups
+}
+
+/**
+ * Сортировка предметов по цене
+ */
+export function sortByPrice(items: FurnitureItem[], ascending: boolean = true): FurnitureItem[] {
+  return [...items].sort((a, b) => {
+    return ascending ? a.price - b.price : b.price - a.price
+  })
+}
+
+/**
+ * Сортировка предметов по названию
+ */
+export function sortByName(items: FurnitureItem[], ascending: boolean = true): FurnitureItem[] {
+  return [...items].sort((a, b) => {
+    const comparison = a.name.localeCompare(b.name, 'ru')
+    return ascending ? comparison : -comparison
+  })
+}
+
+/**
+ * Фильтрация по диапазону цен
+ */
+export function filterByPriceRange(
+  items: FurnitureItem[], 
+  minPrice: number, 
+  maxPrice: number
+): FurnitureItem[] {
+  return items.filter(item => item.price >= minPrice && item.price <= maxPrice)
+}
+
+/**
+ * Фильтрация по размерам (максимальные размеры)
+ */
+export function filterByMaxDimensions(
+  items: FurnitureItem[],
+  maxWidth: number,
+  maxHeight: number,
+  maxDepth: number
+): FurnitureItem[] {
+  return items.filter(item => 
+    item.dimensions.width <= maxWidth &&
+    item.dimensions.height <= maxHeight &&
+    item.dimensions.depth <= maxDepth
+  )
+}
+
+/**
+ * Поиск похожих предметов по стилю и категории
+ */
+export function findSimilarItems(
+  targetItem: FurnitureItem,
+  allItems: FurnitureItem[],
+  limit: number = 5
+): FurnitureItem[] {
+  return allItems
+    .filter(item => 
+      item.id !== targetItem.id && // Исключаем сам предмет
+      (item.category === targetItem.category || // Та же категория
+       item.style.some(style => targetItem.style.includes(style))) // Общие стили
+    )
+    .slice(0, limit)
+}
+
+/**
+ * Вычисление средней цены по категории
+ */
+export function getAveragePrice(items: FurnitureItem[]): number {
+  if (items.length === 0) return 0
+  const total = items.reduce((sum, item) => sum + item.price, 0)
+  return Math.round(total / items.length)
+}
+
+/**
+ * Получение диапазона цен
+ */
+export function getPriceRange(items: FurnitureItem[]): { min: number; max: number } {
+  if (items.length === 0) return { min: 0, max: 0 }
+  
+  const prices = items.map(item => item.price)
+  return {
+    min: Math.min(...prices),
+    max: Math.max(...prices)
+  }
+}
+
+/**
+ * Создание уникального ID для размещенного предмета
+ */
+export function generatePlacedItemId(originalId: string): string {
+  return `${originalId}_placed_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+}
+
+/**
+ * Проверка, помещается ли предмет в комнату
+ */
+export function fitsInRoom(
+  item: FurnitureItem,
+  roomWidth: number,
+  roomDepth: number,
+  roomHeight: number
+): boolean {
+  return (
+    item.dimensions.width <= roomWidth &&
+    item.dimensions.depth <= roomDepth &&
+    item.dimensions.height <= roomHeight
+  )
+}
+
+/**
+ * Получение рекомендуемого расстояния от стен
+ */
+export function getRecommendedWallDistance(item: FurnitureItem): number {
+  // Рекомендуемые расстояния в метрах
+  switch (item.category) {
+    case FurnitureCategory.FURNITURE:
+      return 0.3 // 30 см для мебели
+    case FurnitureCategory.APPLIANCES:
+      return 0.2 // 20 см для техники
+    case FurnitureCategory.PLANTS:
+      return 0.1 // 10 см для растений
+    default:
+      return 0.15 // 15 см по умолчанию
+  }
+}
+
+/**
+ * Валидация данных предмета мебели
+ */
+export function validateFurnitureItem(item: Partial<FurnitureItem>): string[] {
+  const errors: string[] = []
+  
+  if (!item.name || item.name.trim().length === 0) {
+    errors.push('Название предмета обязательно')
   }
   
-  return compatibilityMatrix[style1]?.includes(style2) || false
+  if (!item.category) {
+    errors.push('Категория предмета обязательна')
+  }
+  
+  if (!item.price || item.price <= 0) {
+    errors.push('Цена должна быть положительным числом')
+  }
+  
+  if (!item.dimensions) {
+    errors.push('Размеры предмета обязательны')
+  } else {
+    if (item.dimensions.width <= 0 || item.dimensions.height <= 0 || item.dimensions.depth <= 0) {
+      errors.push('Все размеры должны быть положительными числами')
+    }
+  }
+  
+  if (!item.style || item.style.length === 0) {
+    errors.push('Предмет должен иметь хотя бы один стиль')
+  }
+  
+  return errors
 }

@@ -22,13 +22,25 @@ export {
 } from './three-utils'
 
 export {
-  createFurnitureItem,
-  filterByCategory,
-  filterByStyle,
-  filterByPriceRange,
-  searchByName,
   formatPrice,
-  calculateBudgetPercentage
+  formatDimensions,
+  calculateFootprint,
+  calculateVolume,
+  isCompatibleWithStyle,
+  getPrimaryStyle,
+  groupByCategory,
+  groupByStyle,
+  sortByPrice,
+  sortByName,
+  filterByPriceRange,
+  filterByMaxDimensions,
+  findSimilarItems,
+  getAveragePrice,
+  getPriceRange,
+  generatePlacedItemId,
+  fitsInRoom,
+  getRecommendedWallDistance,
+  validateFurnitureItem
 } from './furniture-utils'
 
 export {

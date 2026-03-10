@@ -145,19 +145,19 @@ export const snapToGrid = (position: Vector3, gridSize = 0.1): Vector3 => ({
 // Утилиты для адаптивного рендеринга
 export const getOptimalCameraPosition = (roomDimensions: { width: number; height: number; depth: number }): Vector3 => {
   const maxDimension = Math.max(roomDimensions.width, roomDimensions.depth, roomDimensions.height)
-  const distance = Math.max(maxDimension * 1.5, 8)
+  const distance = Math.max(maxDimension * 2, 10) // Увеличиваем дистанцию
   
   return {
-    x: distance,
-    y: distance * 0.7,
-    z: distance
+    x: distance * 0.7,
+    y: distance * 0.5,
+    z: distance * 0.7
   }
 }
 
 export const getOptimalCameraTarget = (roomDimensions: { width: number; height: number; depth: number }): Vector3 => {
   return {
     x: 0,
-    y: roomDimensions.height / 2,
+    y: roomDimensions.height / 3, // Смотрим чуть выше пола
     z: 0
   }
 }

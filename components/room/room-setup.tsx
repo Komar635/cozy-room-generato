@@ -6,6 +6,7 @@ import { useRoomStore } from '@/store/room-store'
 import RoomCreator from './room-creator'
 import RoomInfo from './room-info'
 import Scene from '@/components/3d/scene'
+import { BudgetPanel, BudgetWarning } from '@/components/budget'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -31,6 +32,9 @@ export default function RoomSetup({ onComplete }: RoomSetupProps) {
         {showInfo && (
           <div className="space-y-4">
             <RoomInfo />
+            
+            {/* Панель бюджета */}
+            <BudgetPanel />
             
             {/* Кнопки действий */}
             <Card>
@@ -59,6 +63,9 @@ export default function RoomSetup({ onComplete }: RoomSetupProps) {
 
       {/* Правая панель - 3D предпросмотр */}
       <div className="flex-1 min-w-0 min-h-[500px] lg:min-h-[700px] overflow-hidden">
+        {/* Предупреждения о бюджете */}
+        <BudgetWarning className="mb-4" />
+        
         <Card className="w-full h-full">
           <CardHeader className="flex-shrink-0 py-3">
             <CardTitle className="text-lg">3D Предпросмотр</CardTitle>
