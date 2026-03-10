@@ -3,101 +3,25 @@
 ## Архитектура приложения
 
 ### Frontend Architecture
-```
-Next.js App Router
-├── app/                    # Страницы и API routes
-│   ├── api/               # Backend API endpoints
-│   ├── room/              # Страница создания комнаты
-│   ├── furniture-demo/    # Демо размещения мебели
-│   └── search-demo/       # Демо поиска
-├── components/            # React компоненты
-│   ├── 3d/               # Three.js компоненты
-│   ├── furniture/        # Каталог мебели
-│   ├── budget/           # Управление бюджетом
-│   ├── ai/               # AI рекомендации
-│   └── ui/               # UI компоненты (shadcn)
-├── lib/                   # Утилиты и сервисы
-│   ├── services/         # API клиенты
-│   └── data/             # Локальные данные
-├── store/                 # Zustand state management
-└── types/                 # TypeScript типы
-```
+- **Framework**: Next.js 14 (App Router)
+- **State Management**: Zustand (глобальный стор в `store/room-store.ts`)
+- **3D Engine**: Three.js с обертками `@react-three/fiber` и `@react-three/drei`
+- **UI System**: Tailwind CSS + shadcn/ui
 
 ### Ключевые паттерны
 
-#### 1. State Management (Zustand)
-- Глобальное состояние комнаты в `store/room-store.ts`
-- Хранит размеры комнаты, размещенную мебель, бюджет
-- Простой API без boilerplate
+#### 1. Управление состоянием (Zustand)
+- Централизованное хранение параметров комнаты, мебели и бюджета.
+- Асинхронные действия для работы с внешними данными.
 
-#### 2. 3D Rendering (React Three Fiber)
-- Декларативный подход к Three.js
-- Компонентная структура 3D сцены
-- OrbitControls для управления камерой
-- Suspense для ленивой загрузки
+#### 2. Компонентный 3D-дизайн
+- Разделение визуальных элементов (RoomCanvas, FurnitureModels) и бизнес-логики.
+- Использование 'use client' для всех компонентов, взаимодействующих с Three.js.
 
-#### 3. API Layer
-- Next.js API Routes для backend
-- Сервисные классы в `lib/services/`
-- Асинхронные функции для совместимости с Supabase
+#### 3. Сервисный слой (lib/services)
+- Инкапсуляция логики работы с API (Supabase, маркетплейсы, AI) в отдельные сервисы.
+- Поддержка "Free Forever" режима с локальными алгоритмами в качестве фолбэка.
 
-#### 4. Component Composition
-- Atomic Design: ui → components → pages
-- Переиспользуемые UI компоненты (shadcn/ui)
-- Специализированные компоненты для доменов
-
-#### 5. Data Flow
-```
-User Action → Component → Store/API → Update State → Re-render
-```
-
-## Технические решения
-
-### 3D Визуализация
-- **Three.js** через React Three Fiber
-- **@react-three/drei** для хелперов (OrbitControls, Grid, Environment)
-- Оптимизация: отключены тени, низкий dpr для производительности
-
-### Управление состоянием
-- **Zustand** для глобального состояния
-- Локальный state для UI компонентов
-- Мемоизация через useMemo для производительности
-
-### Стилизация
-- **Tailwind CSS** для утилитарных классов
-- **shadcn/ui** для готовых компонентов
-- CSS-in-JS через Tailwind
-
-### База данных (планируется)
-- **Supabase** (PostgreSQL)
-- RLS политики для безопасности
-- Полнотекстовый поиск
-- Автоматический пересчет цен через триггеры
-
-## Связи подсистем
-
-### 1. Room Creation Flow
-```
-RoomCreator → Validation → Store → RoomCanvas → 3D Scene
-```
-
-### 2. Furniture Placement Flow
-```
-FurnitureLibrary → Drag → DropZone → Store → FurnitureManager → 3D Render
-```
-
-### 3. Budget Management Flow
-```
-Item Added → Price Calculation → Budget Check → Warning/Block → Update UI
-```
-
-### 4. Search & Filter Flow
-```
-SearchFilters → Query Building → Database/Local → Results → FurnitureGrid
-```
-
-## Паттерны безопасности
-- Валидация на клиенте и сервере
-- Санитизация пользовательского ввода
-- RLS в Supabase для защиты данных
-- Environment variables для API ключей
+#### 4. Адаптивность и UI
+- Использование Radix UI через shadcn для обеспечения доступности.
+- Responsive-дизайн для работы 3D-сцены на мобильных устройствах.
