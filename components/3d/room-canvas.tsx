@@ -235,31 +235,20 @@ export default function RoomCanvas({
   return (
     <div className={className} style={{ touchAction: 'none' }}>
       <Canvas
-        camera={{ 
+        camera={{
           position: [10, 8, 10],
           fov: 50,
           near: 0.1,
           far: 1000
         }}
-        shadows={false}
+        shadows
         style={{ width: '100%', height: '100%' }}
-        gl={{ 
-          antialias: false,
-          alpha: false,
-          powerPreference: "default"
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: "high-performance"
         }}
-        dpr={1}
-        events={(store) => ({
-          priority: 1,
-          enabled: true,
-          compute: (event, state) => {
-            state.pointer.set(
-              (event.offsetX / state.size.width) * 2 - 1,
-              -(event.offsetY / state.size.height) * 2 + 1
-            )
-            state.raycaster.setFromCamera(state.pointer, state.camera)
-          }
-        })}
+        dpr={[1, 2]}
       >
         <Suspense fallback={null}>
           <SceneContent 

@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { RoomStyle, RoomDimensions } from '@/types/room'
+import { RoomGPTApiService } from '@/lib/services/roomgpt-api'
 
-// Заглушка для будущей интеграции с RoomGPT API
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { 
-      roomDimensions, 
-      style, 
-      budget, 
-      existingFurniture = [] 
+    const {
+      roomDimensions,
+      style,
+      budget,
+      existingFurniture = []
     }: {
       roomDimensions: RoomDimensions
       style: RoomStyle
@@ -25,33 +25,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Интеграция с RoomGPT API (задача 9)
-    // Пока возвращаем заглушку
-    const mockRecommendations = [
-      {
-        id: 'rec_1',
-        name: 'Диван угловой',
-        category: 'furniture',
-        price: 45000,
-        reason: 'Подходит для выбранного стиля и размера комнаты',
-        confidence: 0.9
-      },
-      {
-        id: 'rec_2', 
-        name: 'Журнальный столик',
-        category: 'furniture',
-        price: 12000,
-        reason: 'Дополняет диван и вписывается в бюджет',
-        confidence: 0.8
-      }
-    ]
+    // Вызов реального сервиса (с поддержкой fallback)
+    const aiResult = await RoomGPTApiService.getFurnitureRecommendations({
+      roomDimensions,
+      style,
+      budget,
+      existingFurniture
+    })
+
+    if (!aiResult.success) {
+      return NextResponse.json(
+        { success: false, error: 'Не удалось получить рекомендации' },
+        { status: 500 }
+      )
+    }
+
+    const recommendations = aiResult.data.recommendations
+    const totalEstimatedCost = recommendations.reduce((sum: number, item: any) => sum + item.price, 0)
 
     return NextResponse.json({
       success: true,
       data: {
-        recommendations: mockRecommendations,
-        totalEstimatedCost: mockRecommendations.reduce((sum, item) => sum + item.price, 0),
-        budgetUtilization: mockRecommendations.reduce((sum, item) => sum + item.price, 0) / budget
+        recommendations,
+        totalEstimatedCost,
+        budgetUtilization: totalEstimatedCost / budget,
+        source: aiResult.data.source || 'local'
       }
     })
 
