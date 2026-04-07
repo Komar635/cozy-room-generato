@@ -3,81 +3,75 @@
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-// Динамические импорты для избежания SSR проблем
-const RoomSetup = dynamic(() => import('@/components/room/room-setup'), { 
+const RoomSetup = dynamic(() => import('@/components/room/room-setup'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Загрузка...</div>
+  loading: () => <div className="flex items-center justify-center h-64">Р—Р°РіСЂСѓР·РєР°...</div>
 })
 
-const AIRecommendations = dynamic(() => import('@/components/ai/ai-recommendations'), { 
+const AIRecommendations = dynamic(() => import('@/components/ai/ai-recommendations'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-32">Загрузка AI...</div>
+  loading: () => <div className="flex items-center justify-center h-32">Р—Р°РіСЂСѓР·РєР° AI...</div>
 })
 
-const BudgetOptimizer = dynamic(() => import('@/components/ai/budget-optimizer'), { 
+const BudgetOptimizer = dynamic(() => import('@/components/ai/budget-optimizer'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-32">Загрузка оптимизатора...</div>
+  loading: () => <div className="flex items-center justify-center h-32">Р—Р°РіСЂСѓР·РєР° РѕРїС‚РёРјРёР·Р°С‚РѕСЂР°...</div>
 })
 
-const ImageGenerator = dynamic(() => import('@/components/ai/image-generator'), { 
+const ImageGenerator = dynamic(() => import('@/components/ai/image-generator'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-32">Загрузка генератора...</div>
+  loading: () => <div className="flex items-center justify-center h-32">Р—Р°РіСЂСѓР·РєР° РіРµРЅРµСЂР°С‚РѕСЂР°...</div>
 })
 
 export default function ApiDemoPage() {
   return (
     <main className="min-h-screen bg-background">
       <div className="container mx-auto py-8 space-y-8">
-        {/* Заголовок */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold">API Демонстрация</h1>
+          <h1 className="text-4xl font-bold">API Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Демонстрация всех API функций приложения "Создатель Уютных Комнат"
+            Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ РІСЃРµС… API С„СѓРЅРєС†РёР№ РїСЂРёР»РѕР¶РµРЅРёСЏ &quot;РЎРѕР·РґР°С‚РµР»СЊ РЈСЋС‚РЅС‹С… РљРѕРјРЅР°С‚&quot;
           </p>
         </div>
 
-        {/* Информационная карточка */}
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
-            <CardTitle>🚀 Статус API интеграции</CardTitle>
+            <CardTitle>рџљЂ РЎС‚Р°С‚СѓСЃ API РёРЅС‚РµРіСЂР°С†РёРё</CardTitle>
             <CardDescription>
-              Текущее состояние API функций в приложении
+              РўРµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ API С„СѓРЅРєС†РёР№ РІ РїСЂРёР»РѕР¶РµРЅРёРё
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <h4 className="font-medium text-green-600">✅ Готовые API</h4>
+                <h4 className="font-medium text-green-600">вњ… Р“РѕС‚РѕРІС‹Рµ API</h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• Валидация размеров комнаты</li>
-                  <li>• Сохранение/загрузка проектов</li>
-                  <li>• Заглушки AI рекомендаций</li>
-                  <li>• Заглушки оптимизации бюджета</li>
+                  <li>вЂў Р’Р°Р»РёРґР°С†РёСЏ СЂР°Р·РјРµСЂРѕРІ РєРѕРјРЅР°С‚С‹</li>
+                  <li>вЂў РЎРѕС…СЂР°РЅРµРЅРёРµ/Р·Р°РіСЂСѓР·РєР° РїСЂРѕРµРєС‚РѕРІ</li>
+                  <li>вЂў Р—Р°РіР»СѓС€РєРё AI СЂРµРєРѕРјРµРЅРґР°С†РёР№</li>
+                  <li>вЂў Р—Р°РіР»СѓС€РєРё РѕРїС‚РёРјРёР·Р°С†РёРё Р±СЋРґР¶РµС‚Р°</li>
                 </ul>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium text-orange-600">🔄 В разработке (Задача 9)</h4>
+                <h4 className="font-medium text-orange-600">рџ”„ Р’ СЂР°Р·СЂР°Р±РѕС‚РєРµ (Р—Р°РґР°С‡Р° 9)</h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• RoomGPT API интеграция</li>
-                  <li>• OpenAI для анализа стилей</li>
-                  <li>• Replicate для генерации изображений</li>
-                  <li>• Реальный каталог мебели</li>
+                  <li>вЂў RoomGPT API РёРЅС‚РµРіСЂР°С†РёСЏ</li>
+                  <li>вЂў OpenAI РґР»СЏ Р°РЅР°Р»РёР·Р° СЃС‚РёР»РµР№</li>
+                  <li>вЂў Replicate РґР»СЏ РіРµРЅРµСЂР°С†РёРё РёР·РѕР±СЂР°Р¶РµРЅРёР№</li>
+                  <li>вЂў Р РµР°Р»СЊРЅС‹Р№ РєР°С‚Р°Р»РѕРі РјРµР±РµР»Рё</li>
                 </ul>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Основной контент */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Создание комнаты */}
           <div className="xl:col-span-2">
             <RoomSetup onComplete={(dimensions) => {
-              console.log('Комната создана:', dimensions)
+              console.log('РљРѕРјРЅР°С‚Р° СЃРѕР·РґР°РЅР°:', dimensions)
             }} />
           </div>
 
-          {/* AI функции */}
           <div className="space-y-6">
             <AIRecommendations />
             <BudgetOptimizer />
@@ -85,10 +79,9 @@ export default function ApiDemoPage() {
           </div>
         </div>
 
-        {/* Техническая информация */}
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
-            <CardTitle>🔧 Техническая информация</CardTitle>
+            <CardTitle>рџ”§ РўРµС…РЅРёС‡РµСЃРєР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -100,19 +93,19 @@ export default function ApiDemoPage() {
                 <div>POST /api/ai/budget-optimization</div>
               </div>
             </div>
-            
+
             <div>
-              <h4 className="font-medium mb-2">Сервисные классы:</h4>
+              <h4 className="font-medium mb-2">РЎРµСЂРІРёСЃРЅС‹Рµ РєР»Р°СЃСЃС‹:</h4>
               <div className="text-sm font-mono space-y-1">
-                <div>RoomApiService - работа с комнатами</div>
-                <div>AIApiService - AI функции</div>
+                <div>RoomApiService - СЂР°Р±РѕС‚Р° СЃ РєРѕРјРЅР°С‚Р°РјРё</div>
+                <div>AIApiService - AI С„СѓРЅРєС†РёРё</div>
               </div>
             </div>
 
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-yellow-700 text-sm">
-                <strong>Примечание:</strong> AI функции сейчас возвращают тестовые данные. 
-                Реальная интеграция с RoomGPT API будет выполнена в задаче 9.
+                <strong>РџСЂРёРјРµС‡Р°РЅРёРµ:</strong> AI С„СѓРЅРєС†РёРё СЃРµР№С‡Р°СЃ РІРѕР·РІСЂР°С‰Р°СЋС‚ С‚РµСЃС‚РѕРІС‹Рµ РґР°РЅРЅС‹Рµ.
+                Р РµР°Р»СЊРЅР°СЏ РёРЅС‚РµРіСЂР°С†РёСЏ СЃ RoomGPT API Р±СѓРґРµС‚ РІС‹РїРѕР»РЅРµРЅР° РІ Р·Р°РґР°С‡Рµ 9.
               </p>
             </div>
           </CardContent>

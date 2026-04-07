@@ -211,3 +211,233 @@ export const getQualitySettings = (performanceLevel: 'low' | 'medium' | 'high') 
       }
   }
 }
+
+// ============================================
+// ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ 3D
+// ============================================
+
+// Константы для LOD
+export const LOD_DISTANCES = {
+  HIGH: 5,    // Высокая детализация до 5 метров
+  MEDIUM: 15, // Средняя до 15 метров
+  LOW: 30     // Низкая до 30 метров
+}
+
+export type LODLevel = 'high' | 'medium' | 'low'
+
+// Утилиты для LOD
+export const getLODLevel = (distance: number): LODLevel => {
+  if (distance < LOD_DISTANCES.HIGH) return 'high'
+  if (distance < LOD_DISTANCES.MEDIUM) return 'medium'
+  return 'low'
+}
+
+export const getLODDistance = (level: LODLevel): number => {
+  switch (level) {
+    case 'high': return LOD_DISTANCES.HIGH
+    case 'medium': return LOD_DISTANCES.MEDIUM
+    case 'low': return Infinity
+  }
+}
+
+// Менеджер загрузки 3D моделей с lazy loading
+class ModelLoaderManager {
+  private cache = new Map<string, unknown>()
+  private loading = new Map<string, Promise<unknown>>()
+  private loadedCount = 0
+
+  async loadModel(url: string): Promise<unknown> {
+    if (this.cache.has(url)) {
+      return this.cache.get(url)!
+    }
+
+    if (this.loading.has(url)) {
+      return this.loading.get(url)!
+    }
+
+    const loadPromise = import('three/examples/jsm/loaders/GLTFLoader.js').then(async ({ GLTFLoader }) => {
+      const loader = new GLTFLoader()
+      try {
+        const gltf = await new Promise<unknown>((resolve, reject) => {
+          loader.load(
+            url,
+            resolve,
+            (progress) => {
+              // Loading progress
+            },
+            reject
+          )
+        })
+        this.cache.set(url, gltf)
+        this.loadedCount++
+        return gltf
+      } catch (error) {
+        this.loading.delete(url)
+        throw error
+      }
+    })
+
+    this.loading.set(url, loadPromise as Promise<unknown>)
+    return loadPromise
+  }
+
+  isCached(url: string): boolean {
+    return this.cache.has(url)
+  }
+
+  getCacheSize(): number {
+    return this.cache.size
+  }
+
+  getLoadedCount(): number {
+    return this.loadedCount
+  }
+
+  clearCache(): void {
+    this.cache.clear()
+  }
+}
+
+export const modelLoader = new ModelLoaderManager()
+
+// Preloader для популярной мебели
+class FurniturePreloader {
+  private popularItems: string[] = [
+    'sofa_modern_001',
+    'chair_classic_001',
+    'table_dining_001',
+    'bed_standard_001',
+    'shelf_bookshelf_001',
+    'lamp_floor_001',
+    'rug_area_001',
+    'plant_potted_001'
+  ]
+  private preloadedItems = new Set<string>()
+  private isPreloading = false
+
+  async preload(popularFurnitureIds?: string[]): Promise<void> {
+    if (this.isPreloading) return
+    this.isPreloading = true
+
+    const itemsToPreload = popularFurnitureIds || this.popularItems
+
+    for (const itemId of itemsToPreload) {
+      if (this.preloadedItems.has(itemId)) continue
+
+      const { FURNITURE_DATABASE } = await import('./data/furniture-database')
+      const item = FURNITURE_DATABASE.find(f => f.id === itemId)
+
+      if (item?.modelUrl) {
+        try {
+          await modelLoader.loadModel(item.modelUrl)
+          this.preloadedItems.add(itemId)
+        } catch (error) {
+          console.warn(`Failed to preload ${itemId}:`, error)
+        }
+      }
+    }
+
+    this.isPreloading = false
+  }
+
+  isPreloaded(itemId: string): boolean {
+    return this.preloadedItems.has(itemId)
+  }
+
+  getPreloadedCount(): number {
+    return this.preloadedItems.size
+  }
+}
+
+export const furniturePreloader = new FurniturePreloader()
+
+// Оптимизация текстур
+export const getOptimizedTextureSettings = (performanceLevel: 'low' | 'medium' | 'high') => {
+  switch (performanceLevel) {
+    case 'low':
+      return {
+        format: 6408, // RGBAFormat fallback
+        maxMipmapLevel: 0,
+        anisotropy: 1,
+        quality: 0.5
+      }
+    case 'medium':
+      return {
+        format: 6408,
+        maxMipmapLevel: 1,
+        anisotropy: 4,
+        quality: 0.75
+      }
+    case 'high':
+      return {
+        format: undefined, // Auto format
+        maxMipmapLevel: undefined,
+        anisotropy: 16,
+        quality: 1
+      }
+  }
+}
+
+// Утилиты для Frustum Culling
+export const createFrustumChecker = (camera: THREE.Camera) => {
+  const frustum = new THREE.Frustum()
+  const projScreenMatrix = new THREE.Matrix4()
+
+  return {
+    check: (object: THREE.Object3D): boolean => {
+      projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+      frustum.setFromProjectionMatrix(projScreenMatrix)
+      return frustum.containsPoint(object.position)
+    },
+    checkMany: (objects: THREE.Object3D[]): THREE.Object3D[] => {
+      projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+      frustum.setFromProjectionMatrix(projScreenMatrix)
+
+      return objects.filter(obj => {
+        if (!obj.geometry) return true
+        const boundingSphere = new THREE.Sphere()
+        obj.geometry.computeBoundingSphere()
+        if (obj.geometry.boundingSphere) {
+          boundingSphere.copy(obj.geometry.boundingSphere)
+          boundingSphere.applyMatrix4(obj.matrixWorld)
+          return frustum.intersectsSphere(boundingSphere)
+        }
+        return true
+      })
+    }
+  }
+}
+
+// Утилиты для debounce обновлений
+export const createDebouncedUpdate = (delay: number = 100) => {
+  let timeoutId: NodeJS.Timeout | null = null
+
+  return (callback: () => void) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+    timeoutId = setTimeout(callback, delay)
+  }
+}
+
+// Настройки рендеринга для разных сценариев
+export const RENDER_PRESETS = {
+  INTERACTIVE: {
+    antialias: true,
+    powerPreference: 'high-performance',
+    stencil: false,
+    depth: true
+  },
+  STATIC: {
+    antialias: true,
+    powerPreference: 'low-power',
+    stencil: false,
+    depth: true
+  },
+  MOBILE: {
+    antialias: false,
+    powerPreference: 'low-power',
+    stencil: false,
+    depth: true
+  }
+}

@@ -1,3 +1,5 @@
 export { default as RoomCreator } from './room-creator'
 export { default as RoomInfo } from './room-info'
 export { default as RoomSetup } from './room-setup'
+export { default as StyleSelector } from './style-selector'
+export { default as StyleAnalyzer } from './style-analyzer'

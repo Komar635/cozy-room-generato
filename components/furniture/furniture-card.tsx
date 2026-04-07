@@ -102,8 +102,8 @@ ID: ${item.id}
 
   return (
     <Card 
-      className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-        isHovered ? 'scale-105' : ''
+      className={`group cursor-pointer border-border/70 bg-card/90 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+        isHovered ? 'scale-[1.01]' : ''
       } ${isDragging ? 'opacity-50' : ''} ${!canAdd ? 'opacity-60' : ''} ${className} h-full flex flex-col`}
       onClick={handleCardClick}
       onMouseEnter={() => setIsHovered(true)}
@@ -112,18 +112,18 @@ ID: ${item.id}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <CardContent className="p-4 flex h-full">
+      <CardContent className="flex h-full flex-col gap-4 p-4 sm:flex-row">
         {/* Изображение предмета - слева */}
-        <div className="relative w-32 h-full flex-shrink-0 mr-4 aspect-square overflow-hidden rounded-lg bg-gray-100">
+        <div className="relative h-40 w-full flex-shrink-0 overflow-hidden rounded-xl bg-muted sm:mr-0 sm:h-full sm:w-32">
           {!imageError ? (
             <img
               src={item.thumbnailUrl}
               alt={item.name}
-              className="h-full w-full object-cover transition-transform duration-200 hover:scale-110"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               onError={() => setImageError(true)}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-200 text-gray-500">
+            <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
               <Info className="h-8 w-8" />
               <span className="ml-2 text-xs">Нет изображения</span>
             </div>
@@ -151,7 +151,7 @@ ID: ${item.id}
               {item.name}
             </h3>
             
-            <div className="text-xs text-gray-600 space-y-1">
+            <div className="space-y-1 text-xs text-muted-foreground">
               <div className="select-text cursor-text">Цвет: {item.color}</div>
               <div className="select-text cursor-text">Размер: {getDimensions()}</div>
               <div className="select-text cursor-text">ID: {item.id}</div>
@@ -160,12 +160,12 @@ ID: ${item.id}
           
           {/* Нижняя часть */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-lg text-green-600 select-text cursor-text">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="select-text cursor-text text-lg font-bold text-green-600">
                 {formatPrice(item.price)}
               </span>
               
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {/* Кнопка копирования названия */}
                 <Button
                   size="sm"
@@ -174,7 +174,7 @@ ID: ${item.id}
                     e.stopPropagation()
                     navigator.clipboard.writeText(item.name)
                   }}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 rounded-full p-0"
                   title="Копировать название"
                 >
                   📋
@@ -185,7 +185,7 @@ ID: ${item.id}
                   size="sm"
                   variant="outline"
                   onClick={copyFullInfo}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 rounded-full p-0"
                   title="Копировать всю информацию"
                 >
                   📄
@@ -199,7 +199,7 @@ ID: ${item.id}
                     className={`${
                       canAdd 
                         ? 'bg-blue-600 hover:bg-blue-700' 
-                        : 'bg-gray-400 cursor-not-allowed'
+                        : 'cursor-not-allowed bg-gray-400'
                     } flex-shrink-0`}
                   >
                     <Plus className="h-4 w-4 mr-1" />

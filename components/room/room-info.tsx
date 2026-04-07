@@ -15,13 +15,13 @@ export default function RoomInfo() {
   const perimeter = 2 * (width + depth)
 
   return (
-    <Card className="w-full">
+    <Card className="w-full border-border/70 bg-card/90 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)] animate-slide-up">
       <CardHeader>
         <CardTitle className="text-lg">Информация о комнате</CardTitle>
       </CardHeader>
       
       <CardContent>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           {/* Основные размеры */}
           <div className="space-y-2">
             <h4 className="font-medium text-muted-foreground">Размеры</h4>
@@ -61,7 +61,7 @@ export default function RoomInfo() {
           </div>
 
           {/* Дополнительная информация */}
-          <div className="col-span-2 space-y-2 pt-2 border-t">
+          <div className="space-y-2 border-t pt-2 sm:col-span-2">
             <h4 className="font-medium text-muted-foreground">Дополнительно</h4>
             <div className="space-y-1">
               <div className="flex justify-between">
@@ -76,7 +76,7 @@ export default function RoomInfo() {
           </div>
 
           {/* Рекомендации */}
-          <div className="col-span-2 pt-2 border-t">
+          <div className="border-t pt-2 sm:col-span-2">
             <h4 className="font-medium text-muted-foreground mb-2">Рекомендации</h4>
             <div className="text-xs text-muted-foreground space-y-1">
               {floorArea < 10 && (

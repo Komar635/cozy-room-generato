@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { FurnitureCategory } from '@/types/room'
-import { 
+import {
   FURNITURE_DATABASE,
   getFurnitureByCategory,
   searchFurnitureAdvanced,
@@ -15,7 +15,6 @@ export default function SearchDemoSimplePage() {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
-  // Загрузка данных при изменении категории или поиска
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
@@ -30,7 +29,7 @@ export default function SearchDemoSimplePage() {
           setItems(results)
         }
       } catch (error) {
-        console.error('Ошибка загрузки:', error)
+        console.error('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё:', error)
         setItems([])
       } finally {
         setLoading(false)
@@ -42,22 +41,20 @@ export default function SearchDemoSimplePage() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Демо поиска и фильтрации мебели</h1>
-      
-      {/* Поиск */}
+      <h1 className="text-3xl font-bold mb-6">Р”РµРјРѕ РїРѕРёСЃРєР° Рё С„РёР»СЊС‚СЂР°С†РёРё РјРµР±РµР»Рё</h1>
+
       <div className="mb-6">
         <input
           type="text"
-          placeholder="Поиск мебели..."
+          placeholder="РџРѕРёСЃРє РјРµР±РµР»Рё..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full p-3 border border-gray-300 rounded-lg"
         />
       </div>
 
-      {/* Категории */}
       <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-3">Категории:</h3>
+        <h3 className="text-lg font-semibold mb-3">РљР°С‚РµРіРѕСЂРёРё:</h3>
         <div className="flex flex-wrap gap-2">
           {Object.values(FurnitureCategory).map(category => (
             <button
@@ -75,22 +72,19 @@ export default function SearchDemoSimplePage() {
         </div>
       </div>
 
-      {/* Результаты */}
       <div className="mb-4">
         <h3 className="text-lg font-semibold">
-          Найдено: {items.length} предметов
-          {searchQuery && <span className="text-blue-600 ml-2">по запросу "{searchQuery}"</span>}
+          РќР°Р№РґРµРЅРѕ: {items.length} РїСЂРµРґРјРµС‚РѕРІ
+          {searchQuery && <span className="text-blue-600 ml-2">РїРѕ Р·Р°РїСЂРѕСЃСѓ &quot;{searchQuery}&quot;</span>}
         </h3>
       </div>
 
-      {/* Загрузка */}
       {loading && (
         <div className="text-center py-8">
-          <div className="text-gray-500">Загрузка...</div>
+          <div className="text-gray-500">Р—Р°РіСЂСѓР·РєР°...</div>
         </div>
       )}
 
-      {/* Список товаров */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item) => (
           <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow">
@@ -103,38 +97,35 @@ export default function SearchDemoSimplePage() {
               }}
             />
             <h4 className="font-semibold text-lg mb-2">{item.name}</h4>
-            <p className="text-gray-600 mb-2">Цвет: {item.color}</p>
+            <p className="text-gray-600 mb-2">Р¦РІРµС‚: {item.color}</p>
             <p className="text-green-600 font-bold text-xl">
-              {item.price.toLocaleString('ru-RU')} ₽
+              {item.price.toLocaleString('ru-RU')} в‚Ѕ
             </p>
             <div className="mt-2 text-sm text-gray-500">
-              Размеры: {item.dimensions.width}×{item.dimensions.height}×{item.dimensions.depth} м
+              Р Р°Р·РјРµСЂС‹: {item.dimensions.width}Г—{item.dimensions.height}Г—{item.dimensions.depth} Рј
             </div>
             <div className="mt-1 text-sm text-gray-500">
-              Стили: {item.style.join(', ')}
+              РЎС‚РёР»Рё: {item.style.join(', ')}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Пустое состояние */}
       {!loading && items.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg">
-            {searchQuery 
-              ? `Ничего не найдено по запросу "${searchQuery}"`
-              : 'В этой категории пока нет товаров'
-            }
+            {searchQuery
+              ? `РќРёС‡РµРіРѕ РЅРµ РЅР°Р№РґРµРЅРѕ РїРѕ Р·Р°РїСЂРѕСЃСѓ "${searchQuery}"`
+              : 'Р’ СЌС‚РѕР№ РєР°С‚РµРіРѕСЂРёРё РїРѕРєР° РЅРµС‚ С‚РѕРІР°СЂРѕРІ'}
           </div>
         </div>
       )}
 
-      {/* Информация о базе данных */}
       <div className="mt-12 p-4 bg-gray-100 rounded-lg">
-        <h3 className="font-semibold mb-2">Информация о каталоге:</h3>
-        <p>Всего товаров в базе: {FURNITURE_DATABASE.length}</p>
-        <p>Категории: {Object.values(FurnitureCategory).join(', ')}</p>
-        <p>Размерные категории: {Object.values(sizeCategoryNames).join(', ')}</p>
+        <h3 className="font-semibold mb-2">РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РєР°С‚Р°Р»РѕРіРµ:</h3>
+        <p>Р’СЃРµРіРѕ С‚РѕРІР°СЂРѕРІ РІ Р±Р°Р·Рµ: {FURNITURE_DATABASE.length}</p>
+        <p>РљР°С‚РµРіРѕСЂРёРё: {Object.values(FurnitureCategory).join(', ')}</p>
+        <p>Р Р°Р·РјРµСЂРЅС‹Рµ РєР°С‚РµРіРѕСЂРёРё: {Object.values(sizeCategoryNames).join(', ')}</p>
       </div>
     </div>
   )

@@ -2,28 +2,29 @@
 
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls, Grid, Environment, PerspectiveCamera } from '@react-three/drei'
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState, MutableRefObject, useMemo } from 'react'
 import { useRoomStore } from '@/store/room-store'
 import { FurnitureItem, Vector3 } from '@/types/room'
-import { getOptimalCameraPosition, getOptimalCameraTarget, getDevicePerformanceLevel, getQualitySettings } from '@/lib/three-utils'
+import { getOptimalCameraPosition, getDevicePerformanceLevel, getQualitySettings, RENDER_PRESETS } from '@/lib/three-utils'
 import { FurnitureManager } from './furniture-manager'
 import { DropZone } from './drop-zone'
+import { LoadingSpinner } from '@/components/ui/loading'
 import * as THREE from 'three'
 
 interface RoomCanvasProps {
   onItemSelect?: (item: FurnitureItem | null) => void
   onItemMove?: (itemId: string, position: Vector3) => void
+  onLoad?: () => void
   className?: string
+  captureRef?: React.RefObject<HTMLCanvasElement | null>
 }
 
-// Компонент для отображения пустой комнаты (пол, стены, потолок)
 function Room() {
-  const { roomDimensions } = useRoomStore()
+  const { roomDimensions, wallColor, floorColor } = useRoomStore()
   const { width, height, depth } = roomDimensions
 
   return (
     <group>
-      {/* Пол */}
       <mesh 
         position={[0, 0, 0]} 
         rotation={[-Math.PI / 2, 0, 0]} 
@@ -31,41 +32,37 @@ function Room() {
       >
         <planeGeometry args={[width, depth]} />
         <meshStandardMaterial 
-          color="#f5f5f0" 
+          color={floorColor}
           roughness={0.8}
           metalness={0.1}
         />
       </mesh>
       
-      {/* Стены */}
       <group>
-        {/* Задняя стена */}
         <mesh position={[0, height / 2, -depth / 2]}>
           <planeGeometry args={[width, height]} />
           <meshStandardMaterial 
-            color="#ffffff" 
+            color={wallColor}
             transparent 
             opacity={0.9}
             side={THREE.DoubleSide}
           />
         </mesh>
         
-        {/* Левая стена */}
         <mesh position={[-width / 2, height / 2, 0]} rotation={[0, Math.PI / 2, 0]}>
           <planeGeometry args={[depth, height]} />
           <meshStandardMaterial 
-            color="#ffffff" 
+            color={wallColor}
             transparent 
             opacity={0.9}
             side={THREE.DoubleSide}
           />
         </mesh>
         
-        {/* Правая стена */}
         <mesh position={[width / 2, height / 2, 0]} rotation={[0, -Math.PI / 2, 0]}>
           <planeGeometry args={[depth, height]} />
           <meshStandardMaterial 
-            color="#ffffff" 
+            color={wallColor}
             transparent 
             opacity={0.9}
             side={THREE.DoubleSide}
@@ -73,7 +70,6 @@ function Room() {
         </mesh>
       </group>
       
-      {/* Потолок */}
       <mesh 
         position={[0, height, 0]} 
         rotation={[Math.PI / 2, 0, 0]}
@@ -87,7 +83,6 @@ function Room() {
         />
       </mesh>
       
-      {/* Каркас комнаты для лучшего понимания размеров */}
       <mesh position={[0, height / 2, 0]}>
         <boxGeometry args={[width, height, depth]} />
         <meshBasicMaterial 
@@ -101,7 +96,6 @@ function Room() {
   )
 }
 
-// Компонент для управления камерой и орбитальных контролов
 function CameraController() {
   const { roomDimensions } = useRoomStore()
   
@@ -124,32 +118,50 @@ function CameraController() {
   )
 }
 
-// Компонент освещения сцены
 function SceneLighting() {
+  const { performanceLevel } = useRoomStore()
+  
+  const lightConfig = useMemo(() => {
+    switch (performanceLevel) {
+      case 'low':
+        return { ambient: 0.8, directional: 0.6, point: 0 }
+      case 'medium':
+        return { ambient: 0.6, directional: 0.8, point: 0.3 }
+      case 'high':
+      default:
+        return { ambient: 0.6, directional: 0.8, point: 0.3 }
+    }
+  }, [performanceLevel])
+
   return (
     <>
-      {/* Основное освещение */}
-      <ambientLight intensity={0.6} color="#ffffff" />
+      <ambientLight intensity={lightConfig.ambient} color="#ffffff" />
       
-      {/* Направленный свет */}
       <directionalLight 
         position={[5, 10, 5]} 
-        intensity={0.8}
+        intensity={lightConfig.directional}
         color="#ffffff"
+        castShadow={performanceLevel !== 'low'}
+        shadow-mapSize-width={performanceLevel === 'high' ? 2048 : performanceLevel === 'medium' ? 1024 : 512}
+        shadow-mapSize-height={performanceLevel === 'high' ? 2048 : performanceLevel === 'medium' ? 1024 : 512}
       />
       
-      {/* Дополнительное мягкое освещение */}
-      <pointLight 
-        position={[0, 5, 0]} 
-        intensity={0.3}
-        color="#fff8e1"
-      />
+      {lightConfig.point > 0 && (
+        <pointLight 
+          position={[0, 5, 0]} 
+          intensity={lightConfig.point}
+          color="#fff8e1"
+        />
+      )}
     </>
   )
 }
 
-// Компонент сетки пола
 function FloorGrid() {
+  const { performanceLevel } = useRoomStore()
+  
+  if (performanceLevel === 'low') return null
+  
   return (
     <Grid 
       args={[20, 20]} 
@@ -168,65 +180,96 @@ function FloorGrid() {
   )
 }
 
-// Основной компонент содержимого сцены
-function SceneContent({ onItemSelect, onItemMove }: RoomCanvasProps) {
+function SceneContent({ onItemSelect, onItemMove, onLoad }: RoomCanvasProps) {
+  useEffect(() => {
+    if (onLoad) {
+      const timer = setTimeout(onLoad, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [onLoad])
+
   return (
     <>
-      {/* Контроллер камеры */}
       <CameraController />
-      
-      {/* Освещение */}
       <SceneLighting />
-      
-      {/* Сетка пола */}
       <FloorGrid />
-      
-      {/* Комната */}
       <Room />
       
-      {/* Зона для drag & drop */}
       <DropZone onItemDrop={(item, position) => {
         if (onItemMove) {
           onItemMove(item.id, position)
         }
       }} />
       
-      {/* Менеджер мебели */}
       <FurnitureManager
         onItemSelect={onItemSelect}
         onItemMove={onItemMove}
       />
       
-      {/* Окружение для реалистичного освещения */}
       <Environment preset="apartment" />
     </>
   )
 }
 
-// Компонент загрузки
 function LoadingFallback() {
   return (
-    <div className="flex items-center justify-center h-full bg-gray-50">
-      <div className="text-center space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="text-gray-600">Загрузка 3D сцены...</p>
+    <div className="flex h-full items-center justify-center rounded-2xl bg-muted/30">
+      <div className="space-y-4 text-center">
+        <LoadingSpinner size="xl" />
+        <p className="text-muted-foreground">Загрузка 3D сцены...</p>
       </div>
     </div>
   )
 }
 
-// Основной компонент RoomCanvas
+function PreloadingOverlay() {
+  const { isPreloadingComplete, loadingState } = useRoomStore()
+  
+  if (isPreloadingComplete) return null
+  
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/75 backdrop-blur-sm">
+      <div className="space-y-2 text-center">
+        <LoadingSpinner size="lg" />
+        <p className="text-sm text-muted-foreground">{loadingState.message || 'Загрузка...'}</p>
+      </div>
+    </div>
+  )
+}
+
 export default function RoomCanvas({ 
   onItemSelect, 
   onItemMove, 
-  className = "w-full h-full min-h-[400px]" 
+  onLoad,
+  className = "w-full h-full min-h-[400px]",
+  captureRef
 }: RoomCanvasProps) {
   const [isClient, setIsClient] = useState(false)
+  const glRef = useRef<HTMLCanvasElement | null>(null)
+  const { performanceLevel } = useRoomStore()
   
-  // Проверяем, что мы на клиенте (избегаем SSR проблем)
+  const canvasSettings = useMemo(() => {
+    const preset = performanceLevel === 'low' ? RENDER_PRESETS.MOBILE : 
+                   performanceLevel === 'medium' ? RENDER_PRESETS.INTERACTIVE : 
+                   RENDER_PRESETS.INTERACTIVE
+    const quality = getQualitySettings(performanceLevel)
+    
+    return {
+      ...preset,
+      antialias: quality.antialias,
+      dpr: [1, quality.dpr] as [number, number]
+    }
+  }, [performanceLevel])
+
   useEffect(() => {
     setIsClient(true)
   }, [])
+
+  useEffect(() => {
+    if (captureRef && glRef.current) {
+      (captureRef as MutableRefObject<HTMLCanvasElement | null>).current = glRef.current
+    }
+  }, [captureRef])
   
   if (!isClient) {
     return <LoadingFallback />
@@ -234,6 +277,7 @@ export default function RoomCanvas({
   
   return (
     <div className={className} style={{ touchAction: 'none' }}>
+      <PreloadingOverlay />
       <Canvas
         camera={{
           position: [10, 8, 10],
@@ -241,14 +285,18 @@ export default function RoomCanvas({
           near: 0.1,
           far: 1000
         }}
-        shadows
+        shadows={performanceLevel !== 'low'}
         style={{ width: '100%', height: '100%' }}
         gl={{
-          antialias: true,
+          antialias: canvasSettings.antialias,
           alpha: true,
-          powerPreference: "high-performance"
+          powerPreference: canvasSettings.powerPreference,
+          preserveDrawingBuffer: true
         }}
-        dpr={[1, 2]}
+        dpr={canvasSettings.dpr}
+        onCreated={({ gl }) => {
+          glRef.current = gl.domElement
+        }}
       >
         <Suspense fallback={null}>
           <SceneContent 

@@ -196,8 +196,107 @@ export class RoomGPTApiService {
   }
 
   /**
-   * Проверка статуса API
+   * Оптимизация бюджета с помощью ИИ
    */
+  static async optimizeBudget(params: {
+    currentFurniture: any[]
+    targetBudget: number
+    currentBudget: number
+  }) {
+    try {
+      const overspend = params.currentBudget - params.targetBudget
+
+      if (overspend <= 0) {
+        return {
+          success: true,
+          data: {
+            needsOptimization: false,
+            message: 'Бюджет не превышен'
+          }
+        }
+      }
+
+      if (!this.openaiKey) {
+        console.warn('OpenAI API ключ не настроен для оптимизации бюджета')
+        return this.getFallbackBudgetOptimization(params)
+      }
+
+      const furnitureList = params.currentFurniture.map(item => 
+        `${item.name} - ${item.price} руб.`
+      ).join(', ')
+
+      const prompt = `Оптимизируй бюджет мебели. Текущая мебель: ${furnitureList}. Превышение бюджета: ${overspend} руб. Предложи замены для экономии. Верни JSON: [{originalName, suggestedName, originalPrice, suggestedPrice, savings, reason}]`
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: 'Ты эксперт по оптимизации бюджета мебели. Отвечай только в формате JSON с российскими ценами в рублях.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 800,
+          temperature: 0.5
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API ошибка: ${response.status}`)
+      }
+
+      const result = await response.json()
+      const content = result.choices[0]?.message?.content
+
+      try {
+        const optimizations = JSON.parse(content)
+        
+        const adaptedOptimizations = optimizations.map((opt: any, index: number) => {
+          const originalItem = params.currentFurniture.find(item => 
+            item.name.toLowerCase().includes(opt.originalName.toLowerCase())
+          ) || params.currentFurniture[index % params.currentFurniture.length]
+
+          return {
+            originalItem,
+            suggestedItem: {
+              ...originalItem,
+              id: `opt_${originalItem.id}`,
+              name: opt.suggestedName || `${originalItem.name} (эконом)`,
+              price: opt.suggestedPrice || Math.round(originalItem.price * 0.7)
+            },
+            savings: opt.savings || Math.round(originalItem.price * 0.3),
+            reason: opt.reason || 'Более экономичная альтернатива'
+          }
+        })
+
+        return {
+          success: true,
+          data: {
+            needsOptimization: true,
+            overspend,
+            optimizations: adaptedOptimizations,
+            totalPossibleSavings: adaptedOptimizations.reduce((sum: number, opt: any) => sum + opt.savings, 0),
+            source: 'openai'
+          }
+        }
+      } catch (parseError) {
+        console.error('Ошибка парсинга OpenAI ответа для оптимизации:', parseError)
+        return this.getFallbackBudgetOptimization(params)
+      }
+    } catch (error) {
+      console.error('Ошибка оптимизации бюджета через OpenAI:', error)
+      return this.getFallbackBudgetOptimization(params)
+    }
+  }
   static async checkApiStatus() {
     const status = {
       replicate: {
@@ -332,5 +431,39 @@ export class RoomGPTApiService {
       minimalist: ['#FFFFFF', '#F8F8FF', '#E6E6FA']
     }
     return colorSchemes[style] || colorSchemes.modern
+  }
+
+  private static getFallbackBudgetOptimization(params: any) {
+    const { currentFurniture, targetBudget, currentBudget } = params
+    const overspend = currentBudget - targetBudget
+
+    // Простая логика оптимизации на основе правил
+    const expensiveItems = currentFurniture
+      .filter((item: any) => item.price > 15000)
+      .sort((a: any, b: any) => b.price - a.price)
+
+    const optimizations = expensiveItems.slice(0, 3).map((item: any) => ({
+      originalItem: item,
+      suggestedItem: {
+        ...item,
+        id: `fallback_${item.id}`,
+        name: `${item.name} (бюджетная версия)`,
+        price: Math.round(item.price * 0.65) // 35% скидка
+      },
+      savings: Math.round(item.price * 0.35),
+      reason: 'Аналогичный предмет с лучшим соотношением цена-качество (локальная рекомендация)'
+    }))
+
+    return {
+      success: true,
+      data: {
+        needsOptimization: true,
+        overspend,
+        optimizations,
+        totalPossibleSavings: optimizations.reduce((sum: number, opt: any) => sum + opt.savings, 0),
+        fallback: true,
+        source: 'local-fallback'
+      }
+    }
   }
 }

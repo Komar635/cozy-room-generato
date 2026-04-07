@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { Search, X } from 'lucide-react'
+import { LoadingOverlay } from '../ui/loading'
 
 interface FurnitureLibraryProps {
   className?: string
@@ -144,7 +145,7 @@ export function FurnitureLibrary({ className = '' }: FurnitureLibraryProps) {
     filters.minPrice > 0 || filters.maxPrice < (budget || 100000)
 
   return (
-    <Card className={`h-full flex flex-col ${className}`}>
+    <Card className={`flex h-full flex-col border-border/70 bg-card/90 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)] ${className}`}>
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
           <span>Каталог мебели</span>
@@ -209,35 +210,35 @@ export function FurnitureLibrary({ className = '' }: FurnitureLibraryProps) {
       </CardHeader>
 
       <CardContent className="flex-1 overflow-auto">
-        {/* Результаты поиска */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">
-            Найдено предметов: {items.length}
-            {hasActiveFilters && (
-              <span className="ml-2 text-blue-600">
-                (с фильтрами)
-              </span>
-            )}
-          </p>
-          
-          {/* Показываем активный поиск */}
-          {(quickSearchQuery || filters.query) && (
-            <p className="text-xs text-gray-500 mt-1">
-              Поиск: &quot;{quickSearchQuery || filters.query}&quot;
+        <LoadingOverlay isLoading={loading && items.length > 0} text="Обновляем каталог...">
+          {/* Результаты поиска */}
+          <div className="mb-4 rounded-xl border border-border/60 bg-muted/30 p-3">
+            <p className="text-sm text-muted-foreground">
+              Найдено предметов: <span className="font-medium text-foreground">{items.length}</span>
+              {hasActiveFilters && (
+                <span className="ml-2 text-blue-600 dark:text-blue-300">
+                  (с фильтрами)
+                </span>
+              )}
             </p>
-          )}
-        </div>
+            
+            {(quickSearchQuery || filters.query) && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Поиск: &quot;{quickSearchQuery || filters.query}&quot;
+              </p>
+            )}
+          </div>
 
-        {/* Сетка предметов */}
-        <FurnitureGrid
-          items={items}
-          loading={loading}
-          emptyMessage={
-            hasActiveFilters 
-              ? 'Попробуйте изменить параметры поиска или фильтры'
-              : 'В этой категории пока нет предметов'
-          }
-        />
+          <FurnitureGrid
+            items={items}
+            loading={loading}
+            emptyMessage={
+              hasActiveFilters 
+                ? 'Попробуйте изменить параметры поиска или фильтры'
+                : 'В этой категории пока нет предметов'
+            }
+          />
+        </LoadingOverlay>
       </CardContent>
     </Card>
   )

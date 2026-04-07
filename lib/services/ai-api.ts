@@ -1,12 +1,12 @@
 import { RoomDimensions, RoomStyle, FurnitureItem } from '@/types/room'
-import { LocalAIService } from './local-ai'
+import { AIRecommendationService } from './ai-recommendation-service'
 
 export class AIApiService {
   private static baseUrl = '/api/ai'
 
   /**
    * Получение рекомендаций ИИ по мебели
-   * Использует локальный ИИ как основной, внешние API как дополнение
+   * Использует новый AIRecommendationService с RoomGPT интеграцией
    */
   static async getRecommendations(params: {
     roomDimensions: RoomDimensions
@@ -15,14 +15,6 @@ export class AIApiService {
     existingFurniture?: FurnitureItem[]
   }) {
     try {
-      // Всегда используем локальный ИИ (работает бесплатно навсегда)
-      const localResult = LocalAIService.getFurnitureRecommendations(params)
-      
-      if (localResult.success) {
-        return localResult.data
-      }
-
-      // Fallback на API (если локальный ИИ не сработал)
       const response = await fetch(`${this.baseUrl}/recommendations`, {
         method: 'POST',
         headers: {
@@ -39,16 +31,19 @@ export class AIApiService {
 
       return result.data
     } catch (error) {
-      console.error('Ошибка получения рекомендаций ИИ:', error)
+      console.error('Ошибка API рекомендаций:', error)
       
-      // Последний fallback - всегда работающий локальный ИИ
-      const localResult = LocalAIService.getFurnitureRecommendations(params)
-      return localResult.data
+      // Критический fallback - прямое обращение к сервису
+      try {
+        return await AIRecommendationService.getFurnitureRecommendations(params)
+      } catch (fallbackError) {
+        throw new Error('Критическая ошибка получения рекомендаций')
+      }
     }
   }
 
   /**
-   * Генерация дизайна комнаты (локальный ИИ)
+   * Генерация дизайна комнаты
    */
   static async generateRoomDesign(params: {
     roomDimensions: RoomDimensions
@@ -57,50 +52,32 @@ export class AIApiService {
     preferences?: string[]
   }) {
     try {
-      // Используем локальный ИИ для генерации планировки
-      return LocalAIService.generateRoomLayout(params)
-    } catch (error) {
-      console.error('Ошибка генерации дизайна:', error)
-      throw error
-    }
-  }
+      const response = await fetch(`${this.baseUrl}/room-design`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      })
 
-  /**
-   * Оптимизация бюджета (локальный ИИ)
-   */
-  static async optimizeBudget(params: {
-    currentFurniture: FurnitureItem[]
-    targetBudget: number
-    currentBudget: number
-  }) {
-    try {
-      return LocalAIService.optimizeBudget(params)
-    } catch (error) {
-      console.error('Ошибка оптимизации бюджета:', error)
-      throw error
-    }
-  }
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка генерации дизайна')
+      }
 
-  /**
-   * Генерация изображения комнаты (заглушка для локального использования)
-   */
-  static async generateRoomImage(params: {
-    roomDescription: string
-    style: RoomStyle
-    dimensions: RoomDimensions
-  }) {
-    // Для локального использования возвращаем заглушку
-    return {
-      success: true,
-      data: {
-        imageUrl: null,
-        message: 'Генерация изображений доступна только с внешними API (Replicate, OpenAI)',
-        suggestion: 'Используйте 3D предпросмотр для визуализации комнаты',
-        source: 'local-fallback'
+      return result.data
+    } catch (error) {
+      console.error('Ошибка API генерации дизайна:', error)
+      
+      // Критический fallback
+      try {
+        return await AIRecommendationService.generateRoomDesign(params)
+      } catch (fallbackError) {
+        throw new Error('Критическая ошибка генерации дизайна')
       }
     }
   }
-}
 
   /**
    * Оптимизация бюджета с помощью ИИ
@@ -127,8 +104,70 @@ export class AIApiService {
 
       return result.data
     } catch (error) {
-      console.error('Ошибка оптимизации бюджета:', error)
-      throw error
+      console.error('Ошибка API оптимизации бюджета:', error)
+      
+      // Критический fallback
+      try {
+        return await AIRecommendationService.optimizeBudget(params)
+      } catch (fallbackError) {
+        throw new Error('Критическая ошибка оптимизации бюджета')
+      }
     }
+  }
+
+  /**
+   * Генерация изображения комнаты
+   */
+  static async generateRoomImage(params: {
+    roomDescription: string
+    style: RoomStyle
+    dimensions: RoomDimensions
+  }) {
+    try {
+      const response = await fetch(`${this.baseUrl}/image-generation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      })
+
+      const result = await response.json()
+      
+      if (!response.ok) {
+        // Для генерации изображений нет локального fallback
+        return {
+          success: false,
+          message: result.data?.message || 'Генерация изображений недоступна',
+          suggestion: result.data?.suggestion || 'Используйте 3D предпросмотр'
+        }
+      }
+
+      return result.data
+    } catch (error) {
+      console.error('Ошибка API генерации изображений:', error)
+      return {
+        success: false,
+        message: 'Сервис генерации изображений недоступен',
+        suggestion: 'Используйте 3D предпросмотр для визуализации'
+      }
+    }
+  }
+
+  /**
+   * Анализ стиля и соответствия
+   */
+  static analyzeStyleConsistency(params: {
+    selectedStyle: RoomStyle
+    currentFurniture: FurnitureItem[]
+  }) {
+    return AIRecommendationService.analyzeStyleConsistency(params)
+  }
+
+  /**
+   * Проверка статуса ИИ сервисов
+   */
+  static async checkAIStatus() {
+    return await AIRecommendationService.checkAIServicesStatus()
   }
 }

@@ -17,7 +17,9 @@ export default function WebGLDiagnostics() {
   useEffect(() => {
     try {
       const canvas = document.createElement('canvas')
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+      const gl =
+        (canvas.getContext('webgl') as WebGLRenderingContext | null) ||
+        (canvas.getContext('experimental-webgl') as WebGLRenderingContext | null)
       
       if (!gl) {
         setWebglInfo({

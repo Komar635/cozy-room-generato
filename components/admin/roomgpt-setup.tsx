@@ -7,15 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-interface ApiStatus {
-  available: boolean
-  status: number
-  hasApiKey: boolean
-  error?: string
-}
-
 export default function RoomGPTSetup() {
-  const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null)
+  const [apiStatus, setApiStatus] = useState<any>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [apiKey, setApiKey] = useState('')
   const [apiUrl, setApiUrl] = useState('https://api.roomgpt.io')

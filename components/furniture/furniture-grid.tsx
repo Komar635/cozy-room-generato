@@ -2,6 +2,7 @@
 
 import { FurnitureItem } from '@/types/room'
 import { FurnitureCard } from './furniture-card'
+import { CardSkeleton } from '@/components/ui/loading'
 
 interface FurnitureGridProps {
   items: FurnitureItem[]
@@ -18,12 +19,9 @@ export function FurnitureGrid({
 }: FurnitureGridProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div
-            key={index}
-            className="aspect-square bg-gray-200 rounded-lg animate-pulse"
-          />
+          <CardSkeleton key={index} />
         ))}
       </div>
     )
@@ -53,9 +51,9 @@ export function FurnitureGrid({
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
       {items.map((item) => (
-        <div key={item.id} className="flex-shrink-0 w-80 h-64">
+        <div key={item.id} className="h-full min-h-[16rem] stagger-item">
           <FurnitureCard
             item={item}
             onSelect={onItemSelect}

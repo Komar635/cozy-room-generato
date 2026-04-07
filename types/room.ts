@@ -68,6 +68,12 @@ export interface RoomProject {
   style: RoomStyle
   createdAt: Date
   updatedAt: Date
+  wallColor?: string
+  floorColor?: string
+  accentColor?: string
+  ambientIntensity?: number
+  directionalIntensity?: number
+  lightWarmth?: number
 }
 
 // Предложения по оптимизации бюджета (базовый тип)

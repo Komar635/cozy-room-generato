@@ -8,7 +8,7 @@ import { RoomApiService } from '@/lib/services/room-api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
+import { AsyncButton, LoadingSpinner } from '@/components/ui/loading'
 
 interface RoomCreatorProps {
   onRoomCreated?: (dimensions: RoomDimensions) => void
@@ -128,7 +128,7 @@ export default function RoomCreator({ onRoomCreated }: RoomCreatorProps) {
   const volume = formData.width * formData.height * formData.depth
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md border-border/70 bg-card/85 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)] backdrop-blur animate-fade-in">
       <CardHeader>
         <CardTitle>Создание комнаты</CardTitle>
         <CardDescription>
@@ -217,23 +217,33 @@ export default function RoomCreator({ onRoomCreated }: RoomCreatorProps) {
         )}
 
         {/* Кнопки управления */}
-        <div className="flex gap-2 pt-2">
-          <Button 
+        <div className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
+          <AsyncButton 
             onClick={handleApplyDimensions}
-            disabled={!isValid || isValidating}
-            className="flex-1"
+            loading={isValidating}
+            loadingText="Проверка..."
+            disabled={!isValid}
+            className="w-full touch-punchy"
           >
-            {isValidating ? 'Проверка...' : 'Применить'}
-          </Button>
-          <Button 
+            Применить
+          </AsyncButton>
+          <AsyncButton 
             variant="outline" 
             onClick={handleReset}
-            className="flex-1"
+            className="w-full"
             disabled={isValidating}
           >
             Сброс
-          </Button>
+          </AsyncButton>
         </div>
+
+        {/* Индикатор валидации */}
+        {isValidating && (
+          <div className="flex items-center gap-3 rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-muted-foreground animate-fade-in">
+            <LoadingSpinner size="sm" />
+            <span>Валидация размеров комнаты на сервере...</span>
+          </div>
+        )}
 
         {/* Подсказки */}
         <div className="text-xs text-muted-foreground space-y-1">

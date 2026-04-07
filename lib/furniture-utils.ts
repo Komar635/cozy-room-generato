@@ -13,7 +13,9 @@ export function formatPrice(price: number): string {
     currency: 'RUB',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(price)
+  })
+    .format(price)
+    .replace(/\u00A0/g, ' ')
 }
 
 /**

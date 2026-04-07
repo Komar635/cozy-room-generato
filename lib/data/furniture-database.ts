@@ -336,3 +336,17 @@ export const getCategoryStats = async () => {
 
   return stats
 }
+
+export const getFurnitureByStyle = async (style: RoomStyle) => {
+  await new Promise(resolve => setTimeout(resolve, 100))
+  return FURNITURE_DATABASE.filter(item => item.style.includes(style))
+}
+
+export const getFurnitureByPriceRange = async (minPrice: number, maxPrice: number) => {
+  await new Promise(resolve => setTimeout(resolve, 100))
+  return FURNITURE_DATABASE.filter(item => item.price >= minPrice && item.price <= maxPrice)
+}
+
+export const searchFurniture = async (query: string) => {
+  return searchFurnitureAdvanced(query, {})
+}

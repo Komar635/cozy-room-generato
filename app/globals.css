@@ -55,6 +55,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
@@ -154,4 +155,249 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Адаптивные утилиты */
+@layer utilities {
+  /* Мобильная оптимизация - скрытие на мобильных */
+  .hidden-mobile {
+    @apply hidden md:block;
+  }
+  
+  .visible-mobile-only {
+    @apply md:hidden;
+  }
+  
+  /* touch-friendly sizing */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Улучшенная читаемость на мобильных */
+  .mobile-text-base {
+    @apply text-base;
+  }
+  
+  /* Сенсорная зона для кнопок */
+  .btn-touch {
+    @apply touch-manipulation;
+  }
+}
+
+/* Адаптивные стили для панелей */
+@media (max-width: 640px) {
+  .room-setup-container {
+    flex-direction: column !important;
+  }
+  
+  .room-setup-container > div:first-child {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    max-height: 50vh !important;
+  }
+  
+  .room-setup-container > div:last-child {
+    min-height: 300px !important;
+  }
+}
+
+/* Анимации для UI элементов */
+.animate-in {
+  animation-duration: 200ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.slide-in-from-left {
+  --tw-enter-translate-x: -100%;
+}
+
+.slide-in-from-right {
+  --tw-enter-translate-x: 100%;
+}
+
+.slide-in-from-top {
+  --tw-enter-translate-y: -100%;
+}
+
+.slide-in-from-bottom {
+  --tw-enter-translate-y: 100%;
+}
+
+.fade-in {
+  --tw-enter-opacity: 0;
+}
+
+.zoom-in {
+  --tw-enter-scale: 0.95;
+}
+
+/* Улучшенные transitions */
+.transition-all-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Анимация появления карточек */
+.card-animate {
+  animation: cardSlideIn 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Анимация кнопок */
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+/* Анимация hover для карточек */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dark .card-hover:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Анимация skeleton загрузки */
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, 
+    hsl(var(--muted)) 0%, 
+    hsl(var(--muted-foreground) / 0.1) 50%, 
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes skeletonPulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Mobile-first утилиты */
+@media (max-width: 768px) {
+  .mobile-p-2 { padding: 0.5rem; }
+  .mobile-gap-2 { gap: 0.5rem; }
+  .mobile-text-sm { font-size: 0.875rem; }
+  .mobile-rounded { border-radius: 0.375rem; }
+  
+  /* Улучшенная мобильная верстка */
+  .mobile-panel-full {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .mobile-panel-scroll {
+    max-height: 40vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .mobile-canvas-min {
+    min-height: 300px !important;
+  }
+  
+  /* Мобильные отступы */
+  .mobile-p-3 {
+    padding: 0.75rem;
+  }
+  
+  .mobile-mb-2 {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Touch-friendly утилиты */
+.touch-punchy {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Stagger анимации для списков */
+.stagger-item {
+  animation: staggerFadeIn 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+.stagger-item:nth-child(4) { animation-delay: 150ms; }
+.stagger-item:nth-child(5) { animation-delay: 200ms; }
+.stagger-item:nth-child(6) { animation-delay: 250ms; }
+.stagger-item:nth-child(7) { animation-delay: 300ms; }
+.stagger-item:nth-child(8) { animation-delay: 350ms; }
+
+@keyframes staggerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
