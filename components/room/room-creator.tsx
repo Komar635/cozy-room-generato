@@ -130,7 +130,7 @@ export default function RoomCreator({ onRoomCreated }: RoomCreatorProps) {
   return (
     <Card className="w-full max-w-md border-border/70 bg-card/85 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)] backdrop-blur animate-fade-in">
       <CardHeader>
-        <CardTitle>Создание комнаты</CardTitle>
+        <CardTitle data-testid="room-creator-title">Создание комнаты</CardTitle>
         <CardDescription>
           Укажите размеры комнаты в метрах. Изменения отображаются в реальном времени.
         </CardDescription>
@@ -142,6 +142,7 @@ export default function RoomCreator({ onRoomCreated }: RoomCreatorProps) {
           <Label htmlFor="width">Ширина (м)</Label>
           <Input
             id="width"
+            data-testid="room-width-input"
             type="number"
             min={ROOM_CONSTANTS.MIN_DIMENSION}
             max={ROOM_CONSTANTS.MAX_DIMENSION}
@@ -161,6 +162,7 @@ export default function RoomCreator({ onRoomCreated }: RoomCreatorProps) {
           <Label htmlFor="height">Высота (м)</Label>
           <Input
             id="height"
+            data-testid="room-height-input"
             type="number"
             min={ROOM_CONSTANTS.MIN_DIMENSION}
             max={ROOM_CONSTANTS.MAX_DIMENSION}
@@ -180,6 +182,7 @@ export default function RoomCreator({ onRoomCreated }: RoomCreatorProps) {
           <Label htmlFor="depth">Глубина (м)</Label>
           <Input
             id="depth"
+            data-testid="room-depth-input"
             type="number"
             min={ROOM_CONSTANTS.MIN_DIMENSION}
             max={ROOM_CONSTANTS.MAX_DIMENSION}
@@ -196,20 +199,20 @@ export default function RoomCreator({ onRoomCreated }: RoomCreatorProps) {
 
         {/* Предпросмотр размеров */}
         {isValid && (
-          <div className="p-3 bg-muted rounded-md space-y-1">
+          <div className="p-3 bg-muted rounded-md space-y-1" data-testid="room-preview">
             <h4 className="font-medium text-sm">Предпросмотр:</h4>
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p>Размеры: {formData.width} × {formData.height} × {formData.depth} м</p>
+            <div className="text-sm text-muted-foreground space-y-1" data-testid="room-preview-metrics">
+              <p data-testid="room-preview-dimensions">Размеры: {formData.width} × {formData.height} × {formData.depth} м</p>
               {serverCalculations ? (
                 <>
-                  <p>Площадь пола: {serverCalculations.floorArea} м² (сервер)</p>
-                  <p>Объем: {serverCalculations.volume} м³ (сервер)</p>
-                  <p>Периметр: {serverCalculations.perimeter} м</p>
+                  <p data-testid="room-floor-area-server">Площадь пола: {serverCalculations.floorArea} м² (сервер)</p>
+                  <p data-testid="room-volume-server">Объем: {serverCalculations.volume} м³ (сервер)</p>
+                  <p data-testid="room-perimeter-server">Периметр: {serverCalculations.perimeter} м</p>
                 </>
               ) : (
                 <>
-                  <p>Площадь пола: {floorArea.toFixed(1)} м² (локально)</p>
-                  <p>Объем: {volume.toFixed(1)} м³ (локально)</p>
+                  <p data-testid="room-floor-area-local">Площадь пола: {floorArea.toFixed(1)} м² (локально)</p>
+                  <p data-testid="room-volume-local">Объем: {volume.toFixed(1)} м³ (локально)</p>
                 </>
               )}
             </div>
@@ -224,6 +227,7 @@ export default function RoomCreator({ onRoomCreated }: RoomCreatorProps) {
             loadingText="Проверка..."
             disabled={!isValid}
             className="w-full touch-punchy"
+            data-testid="room-apply-button"
           >
             Применить
           </AsyncButton>
@@ -232,6 +236,7 @@ export default function RoomCreator({ onRoomCreated }: RoomCreatorProps) {
             onClick={handleReset}
             className="w-full"
             disabled={isValidating}
+            data-testid="room-reset-button"
           >
             Сброс
           </AsyncButton>

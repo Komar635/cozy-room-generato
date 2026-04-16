@@ -253,6 +253,7 @@ export default function ProjectManager({ onExportImage }: ProjectManagerProps) {
           <Label htmlFor="project-name">Название проекта</Label>
           <Input
             id="project-name"
+            data-testid="project-name-input"
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
             placeholder="Название проекта"
@@ -291,11 +292,11 @@ export default function ProjectManager({ onExportImage }: ProjectManagerProps) {
         <div className="space-y-2">
           <Label className="text-sm text-muted-foreground">Локальное сохранение</Label>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <AsyncButton size="sm" variant="secondary" onClick={() => handleLocalSave()} loading={isLocalSaving} loadingText="Сохраняем..." className="justify-start">
+            <AsyncButton size="sm" variant="secondary" onClick={() => handleLocalSave()} loading={isLocalSaving} loadingText="Сохраняем..." className="justify-start" data-testid="project-local-save-button">
               <HardDriveDownload className="h-4 w-4" />
               В браузере
             </AsyncButton>
-            <AsyncButton size="sm" variant="secondary" onClick={() => handleLocalLoad()} className="justify-start">
+            <AsyncButton size="sm" variant="secondary" onClick={() => handleLocalLoad()} className="justify-start" data-testid="project-local-load-button">
               <FolderOpen className="h-4 w-4" />
               Загрузить
             </AsyncButton>
@@ -307,11 +308,12 @@ export default function ProjectManager({ onExportImage }: ProjectManagerProps) {
             <Label className="text-sm text-muted-foreground">Сохранённые проекты</Label>
             <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
               {savedProjects.map((project) => (
-                <div key={project.id} className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/40 p-2 text-xs transition-colors hover:bg-muted/70">
+                <div key={project.id} className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/40 p-2 text-xs transition-colors hover:bg-muted/70" data-testid={`saved-project-${project.id}`}>
                   <button
                     type="button"
                     className="flex-1 text-left hover:underline"
                     onClick={() => handleLocalLoad(project)}
+                    data-testid={`saved-project-load-${project.id}`}
                   >
                     {project.name}
                   </button>
@@ -351,6 +353,7 @@ export default function ProjectManager({ onExportImage }: ProjectManagerProps) {
           onClick={() => saveProject()}
           loading={loadingState.isLoading}
           loadingText={loadingState.message || 'Сохраняем...'}
+          data-testid="project-save-api-button"
         >
           <Save className="h-4 w-4" />
           Сохранить через API
@@ -360,8 +363,8 @@ export default function ProjectManager({ onExportImage }: ProjectManagerProps) {
           <>
             <Separator />
             <div className="text-sm text-muted-foreground">
-              <p>Предметов: {furniture.length}</p>
-              <p>Общая стоимость: {spentAmount.toLocaleString('ru-RU')} ₽</p>
+              <p data-testid="project-furniture-count">Предметов: {furniture.length}</p>
+              <p data-testid="project-total-cost">Общая стоимость: {spentAmount.toLocaleString('ru-RU')} ₽</p>
             </div>
           </>
         )}

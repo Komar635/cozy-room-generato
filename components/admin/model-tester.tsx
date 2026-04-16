@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { LoadingSpinner } from '@/components/ui/loading'
+import { Progress } from '@/components/ui/progress'
 
 interface ModelStatus {
   name: string
@@ -34,6 +36,7 @@ export default function ModelTester() {
       status: 'checking'
     }
   ])
+  const [isBatchChecking, setIsBatchChecking] = useState(false)
 
   const testModel = async (model: ModelStatus, index: number) => {
     const apiKey = process.env.NEXT_PUBLIC_HUGGINGFACE_API_KEY || 'hf_test'
@@ -80,11 +83,21 @@ export default function ModelTester() {
     }
   }
 
-  const testAllModels = () => {
-    models.forEach((model, index) => {
-      testModel(model, index)
-    })
+  const testAllModels = async () => {
+    setIsBatchChecking(true)
+    setModels((prev) => prev.map((model) => ({ ...model, status: 'checking', error: undefined })))
+
+    try {
+      for (const [index, model] of models.entries()) {
+        await testModel(model, index)
+      }
+    } finally {
+      setIsBatchChecking(false)
+    }
   }
+
+  const checkedCount = models.filter((model) => model.status !== 'checking').length
+  const progressValue = models.length > 0 ? (checkedCount / models.length) * 100 : 0
 
   const getStatusIcon = (status: ModelStatus['status']) => {
     switch (status) {
@@ -115,9 +128,24 @@ export default function ModelTester() {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        <Button onClick={testAllModels} className="w-full">
+        <Button onClick={testAllModels} className="w-full" disabled={isBatchChecking}>
           Проверить все модели
         </Button>
+
+        {isBatchChecking && (
+          <div className="space-y-3 rounded-lg border border-border/60 bg-muted/30 p-4">
+            <div className="flex items-center gap-3">
+              <LoadingSpinner size="sm" />
+              <div>
+                <p className="text-sm font-medium">Пакетная проверка моделей</p>
+                <p className="text-xs text-muted-foreground">
+                  Проверено {checkedCount} из {models.length}
+                </p>
+              </div>
+            </div>
+            <Progress value={progressValue} className="h-2" />
+          </div>
+        )}
 
         <div className="space-y-3">
           {models.map((model, index) => (

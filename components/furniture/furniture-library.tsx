@@ -145,7 +145,7 @@ export function FurnitureLibrary({ className = '' }: FurnitureLibraryProps) {
     filters.minPrice > 0 || filters.maxPrice < (budget || 100000)
 
   return (
-    <Card className={`flex h-full flex-col border-border/70 bg-card/90 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)] ${className}`}>
+    <Card className={`flex h-full flex-col border-border/70 bg-card/90 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)] transition-all-smooth ${className}`}>
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
           <span>Каталог мебели</span>
@@ -157,7 +157,7 @@ export function FurnitureLibrary({ className = '' }: FurnitureLibraryProps) {
 
         {/* Быстрый поиск */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Быстрый поиск предметов..."
             value={quickSearchQuery}
@@ -212,11 +212,11 @@ export function FurnitureLibrary({ className = '' }: FurnitureLibraryProps) {
       <CardContent className="flex-1 overflow-auto">
         <LoadingOverlay isLoading={loading && items.length > 0} text="Обновляем каталог...">
           {/* Результаты поиска */}
-          <div className="mb-4 rounded-xl border border-border/60 bg-muted/30 p-3">
+          <div className="mb-4 rounded-xl border border-border/60 bg-muted/30 p-3 animate-fade-in transition-all-smooth">
             <p className="text-sm text-muted-foreground">
               Найдено предметов: <span className="font-medium text-foreground">{items.length}</span>
               {hasActiveFilters && (
-                <span className="ml-2 text-blue-600 dark:text-blue-300">
+                <span className="ml-2 text-primary">
                   (с фильтрами)
                 </span>
               )}

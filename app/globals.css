@@ -53,8 +53,15 @@
   * {
     @apply border-border;
   }
+
+  html {
+    min-height: 100%;
+    background: hsl(var(--background));
+  }
+
   body {
     @apply bg-background text-foreground;
+    min-height: 100vh;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
@@ -64,7 +71,7 @@
   .scene-container {
     width: 100% !important;
     height: 100% !important;
-    min-height: 450px !important;
+    min-height: 360px !important;
     position: relative !important;
   }
   
@@ -78,21 +85,22 @@
   .room-setup-container {
     height: 100%;
     display: flex;
+    flex-direction: column;
   }
   
   .room-3d-viewport {
     flex: 1;
-    min-height: 500px;
-    min-width: 400px; /* Минимальная ширина для 3D области */
+    min-height: 320px;
+    min-width: 0;
     width: 100%;
   }
   
   /* Фиксированная ширина левой панели с прокруткой */
   .room-setup-container > div:first-child {
     flex-shrink: 0;
-    width: 320px;
-    max-width: 320px;
-    min-width: 320px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     overflow-y: auto;
     max-height: 100%;
   }
@@ -178,6 +186,21 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+@keyframes softFloat {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -8px, 0); }
+}
+
+@keyframes gentleGlow {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.04); }
+}
+
+@keyframes revealGradient {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -197,6 +220,18 @@
 
 .animate-scale-in {
   animation: scaleIn 0.2s ease-out;
+}
+
+.animate-soft-float {
+  animation: softFloat 8s ease-in-out infinite;
+}
+
+.animate-gentle-glow {
+  animation: gentleGlow 6s ease-in-out infinite;
+}
+
+.animate-reveal-gradient {
+  animation: revealGradient 0.7s ease-out forwards;
 }
 
 .animate-shimmer {
@@ -233,7 +268,24 @@
 }
 
 /* Адаптивные стили для панелей */
-@media (max-width: 640px) {
+@media (min-width: 1024px) {
+  .room-setup-container {
+    flex-direction: row;
+  }
+
+  .room-3d-viewport {
+    min-height: 520px;
+    min-width: 420px;
+  }
+
+  .room-setup-container > div:first-child {
+    width: 320px;
+    max-width: 320px;
+    min-width: 320px;
+  }
+}
+
+@media (max-width: 767px) {
   .room-setup-container {
     flex-direction: column !important;
   }
@@ -246,7 +298,11 @@
   }
   
   .room-setup-container > div:last-child {
-    min-height: 300px !important;
+    min-height: 280px !important;
+  }
+
+  .scene-container {
+    min-height: 280px !important;
   }
 }
 
@@ -284,6 +340,44 @@
 /* Улучшенные transitions */
 .transition-all-smooth {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.page-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(circle at top left, hsl(var(--primary) / 0.14), transparent 34%),
+    radial-gradient(circle at top right, hsl(var(--accent) / 0.12), transparent 28%),
+    linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)) 68%, hsl(var(--muted) / 0.55));
+  opacity: 0;
+  animation: revealGradient 0.8s ease-out forwards;
+}
+
+.page-shell::after {
+  content: '';
+  position: absolute;
+  inset: 18% auto auto 50%;
+  width: min(22rem, 45vw);
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  background: radial-gradient(circle, hsl(var(--primary) / 0.16), transparent 68%);
+  filter: blur(18px);
+  transform: translateX(-50%);
+  z-index: -1;
+  pointer-events: none;
+  animation: gentleGlow 8s ease-in-out infinite;
+}
+
+.glass-panel {
+  background: hsl(var(--card) / 0.78);
+  backdrop-filter: blur(18px);
 }
 
 /* Анимация появления карточек */

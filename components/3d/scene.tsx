@@ -2,6 +2,7 @@
 
 import { forwardRef, useImperativeHandle, useRef } from 'react'
 import RoomCanvas from './room-canvas'
+import { PerformanceCaptureReport, PerformanceCaptureRequest } from '@/lib/three-performance'
 import { FurnitureItem, Vector3 } from '@/types/room'
 
 interface SceneProps {
@@ -9,6 +10,8 @@ interface SceneProps {
   onItemMove?: (itemId: string, position: Vector3) => void
   onLoad?: () => void
   className?: string
+  performanceCapture?: PerformanceCaptureRequest | null
+  onPerformanceReport?: (report: PerformanceCaptureReport) => void
 }
 
 export interface SceneRef {
@@ -19,7 +22,9 @@ const Scene = forwardRef<SceneRef, SceneProps>(function Scene({
   onItemSelect, 
   onItemMove,
   onLoad,
-  className = "w-full h-full min-h-[400px]" 
+  className = "w-full h-full min-h-[400px]",
+  performanceCapture,
+  onPerformanceReport
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -45,6 +50,8 @@ const Scene = forwardRef<SceneRef, SceneProps>(function Scene({
         onLoad={onLoad}
         className="w-full h-full"
         captureRef={canvasRef}
+        performanceCapture={performanceCapture}
+        onPerformanceReport={onPerformanceReport}
       />
     </div>
   )

@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
 import { OptimizedFurnitureItem } from './optimized-furniture-item'
 import { useRoomStore } from '@/store/room-store'
 import { FurnitureItem, Vector3 } from '@/types/room'
-import { modelLoader, getQualitySettings } from '@/lib/three-utils'
+import { modelLoader } from '@/lib/three-utils'
 import * as THREE from 'three'
 
 interface FurnitureManagerProps {
@@ -13,6 +13,7 @@ interface FurnitureManagerProps {
   onItemMove?: (itemId: string, position: Vector3) => void
   onItemRotate?: (itemId: string, rotation: Vector3) => void
   onItemScale?: (itemId: string, scale: number) => void
+  onModelLoadingChange?: (message?: string) => void
 }
 
 function FrustumCullingController({ children }: { children: (visibleIds: Set<string>) => React.ReactNode }) {
@@ -83,38 +84,48 @@ export function FurnitureManager({
   onItemSelect,
   onItemMove,
   onItemRotate,
-  onItemScale
+  onItemScale,
+  onModelLoadingChange
 }: FurnitureManagerProps) {
-  const { furniture, performanceLevel, isPreloadingComplete, initPerformanceOptimization, preloadPopularFurniture } = useRoomStore()
+  const { furniture, isPreloadingComplete, initPerformanceOptimization, preloadPopularFurniture } = useRoomStore()
   const [loadedModels, setLoadedModels] = useState<Set<string>>(new Set())
-
-  const qualitySettings = useMemo(() => {
-    return getQualitySettings(performanceLevel)
-  }, [performanceLevel])
 
   useEffect(() => {
     initPerformanceOptimization()
     if (!isPreloadingComplete) {
       preloadPopularFurniture()
     }
-  }, [])
+  }, [initPerformanceOptimization, isPreloadingComplete, preloadPopularFurniture])
 
   useEffect(() => {
     const loadMissingModels = async () => {
-      for (const item of furniture) {
-        if (item.modelUrl && !loadedModels.has(item.id) && !modelLoader.isCached(item.modelUrl)) {
-          try {
-            await modelLoader.loadModel(item.modelUrl)
-            setLoadedModels(prev => new Set(prev).add(item.id))
-          } catch (error) {
-            console.warn(`Failed to load model for ${item.name}:`, error)
-          }
+      const missingItems = furniture.filter(
+        (item) => item.modelUrl && !loadedModels.has(item.id) && !modelLoader.isCached(item.modelUrl)
+      )
+
+      if (missingItems.length === 0) {
+        onModelLoadingChange?.(undefined)
+        return
+      }
+
+      onModelLoadingChange?.(`Подгружаем 3D модели: ${missingItems.length} шт.`)
+
+      for (const item of missingItems) {
+        try {
+          await modelLoader.loadModel(item.modelUrl!)
+          setLoadedModels(prev => new Set(prev).add(item.id))
+        } catch (error) {
+          console.warn(`Failed to load model for ${item.name}:`, error)
         }
       }
+
+      onModelLoadingChange?.(undefined)
     }
 
     loadMissingModels()
-  }, [furniture])
+
+    return () => onModelLoadingChange?.(undefined)
+  }, [furniture, loadedModels, onModelLoadingChange])
 
   return (
     <group>

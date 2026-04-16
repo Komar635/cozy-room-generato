@@ -118,7 +118,7 @@ export function SearchFilters({
             variant="ghost"
             size="sm"
             onClick={clearAllFilters}
-            className="text-red-600 hover:text-red-700"
+            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
           >
             <X className="h-4 w-4 mr-1" />
             Сбросить все
@@ -128,7 +128,7 @@ export function SearchFilters({
 
       {/* Панель фильтров */}
       {isVisible && (
-        <Card className="p-4 space-y-6 bg-gray-50">
+        <Card className="space-y-6 border-border/60 bg-muted/30 p-4">
           {/* Поиск */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">
@@ -154,7 +154,7 @@ export function SearchFilters({
               step={1000}
               className="w-full"
             />
-            <div className="flex gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Input
                 type="number"
                 placeholder="От"
@@ -164,7 +164,7 @@ export function SearchFilters({
                   setPriceRange([value, priceRange[1]])
                   updateFilters({ minPrice: value })
                 }}
-                className="w-24"
+                className="w-full"
               />
               <Input
                 type="number"
@@ -175,7 +175,7 @@ export function SearchFilters({
                   setPriceRange([priceRange[0], value])
                   updateFilters({ maxPrice: value })
                 }}
-                className="w-24"
+                className="w-full"
               />
             </div>
           </div>

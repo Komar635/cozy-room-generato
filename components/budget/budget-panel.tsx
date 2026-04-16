@@ -58,19 +58,19 @@ export default function BudgetPanel({ className = "" }: BudgetPanelProps) {
   
   const getStatusColor = () => {
     switch (budgetStatus) {
-      case 'safe': return 'text-green-600'
-      case 'warning': return 'text-yellow-600'
-      case 'exceeded': return 'text-red-600'
-      default: return 'text-gray-600'
+      case 'safe': return 'text-emerald-600 dark:text-emerald-400'
+      case 'warning': return 'text-amber-600 dark:text-amber-400'
+      case 'exceeded': return 'text-red-600 dark:text-red-400'
+      default: return 'text-muted-foreground'
     }
   }
   
   const getStatusIcon = () => {
     switch (budgetStatus) {
-      case 'safe': return <TrendingUp className="h-4 w-4 text-green-600" />
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-600" />
-      case 'exceeded': return <TrendingDown className="h-4 w-4 text-red-600" />
-      default: return <DollarSign className="h-4 w-4 text-gray-600" />
+      case 'safe': return <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+      case 'exceeded': return <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+      default: return <DollarSign className="h-4 w-4 text-muted-foreground" />
     }
   }
   
@@ -90,7 +90,7 @@ export default function BudgetPanel({ className = "" }: BudgetPanelProps) {
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2" data-testid="budget-panel-title">
           <DollarSign className="h-5 w-5" />
           Управление бюджетом
         </CardTitle>
@@ -120,12 +120,13 @@ export default function BudgetPanel({ className = "" }: BudgetPanelProps) {
           ) : (
             <div className="flex items-center justify-between">
               <span className="text-lg font-semibold">
-                {formatCurrency(budget)}
+                <span data-testid="budget-total-value">{formatCurrency(budget)}</span>
               </span>
               <Button 
                 size="sm" 
                 variant="outline" 
                 onClick={() => setIsEditing(true)}
+                data-testid="budget-edit-button"
               >
                 Изменить
               </Button>
@@ -138,41 +139,41 @@ export default function BudgetPanel({ className = "" }: BudgetPanelProps) {
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Потрачено</span>
             <span className="text-sm font-semibold">
-              {formatCurrency(spentAmount)}
+              <span data-testid="budget-spent-value">{formatCurrency(spentAmount)}</span>
             </span>
           </div>
           
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Остаток</span>
             <span className={`text-sm font-semibold ${getStatusColor()}`}>
-              {formatCurrency(remainingBudget)}
+              <span data-testid="budget-remaining-value">{formatCurrency(remainingBudget)}</span>
             </span>
           </div>
           
           {/* Прогресс-бар */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="h-2 w-full rounded-full bg-muted">
             <div 
               className={`h-2 rounded-full transition-all duration-300 ${
-                budgetStatus === 'safe' ? 'bg-green-500' :
-                budgetStatus === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                budgetStatus === 'safe' ? 'bg-emerald-500' :
+                budgetStatus === 'warning' ? 'bg-amber-500' : 'bg-red-500'
               }`}
               style={{ width: `${Math.min(budgetUsagePercent, 100)}%` }}
             />
           </div>
           
-          <div className="text-xs text-gray-500 text-center">
+          <div className="text-center text-xs text-muted-foreground" data-testid="budget-usage-percent">
             Использовано {budgetUsagePercent.toFixed(1)}% от бюджета
           </div>
         </div>
         
         {/* Статус и предупреждения */}
         <div className={`flex items-center gap-2 p-3 rounded-lg ${
-          budgetStatus === 'safe' ? 'bg-green-50 border border-green-200' :
-          budgetStatus === 'warning' ? 'bg-yellow-50 border border-yellow-200' :
-          'bg-red-50 border border-red-200'
-        }`}>
+          budgetStatus === 'safe' ? 'border border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/40' :
+          budgetStatus === 'warning' ? 'border border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/40' :
+          'border border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/40'
+        }`} data-testid="budget-status-banner">
           {getStatusIcon()}
-          <span className={`text-sm font-medium ${getStatusColor()}`}>
+          <span className={`text-sm font-medium ${getStatusColor()}`} data-testid="budget-status-message">
             {getStatusMessage()}
           </span>
         </div>
@@ -183,8 +184,8 @@ export default function BudgetPanel({ className = "" }: BudgetPanelProps) {
             <Label>Предметы в комнате ({furniture.length})</Label>
             <div className="max-h-32 overflow-y-auto space-y-1">
               {furniture.map((item) => (
-                <div key={item.id} className="flex justify-between text-xs">
-                  <span className="truncate flex-1">{item.name}</span>
+                <div key={item.id} className="flex justify-between text-xs" data-testid={`budget-item-${item.id}`}>
+                  <span className="truncate flex-1" data-testid={`budget-item-name-${item.id}`}>{item.name}</span>
                   <span className="font-medium ml-2">
                     {formatCurrency(item.price)}
                   </span>
@@ -196,13 +197,13 @@ export default function BudgetPanel({ className = "" }: BudgetPanelProps) {
         
         {/* Предупреждения и рекомендации */}
         {budgetStatus === 'warning' && (
-          <div className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded">
+          <div className="rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
             💡 Рекомендуем найти более бюджетные альтернативы для некоторых предметов
           </div>
         )}
         
         {budgetStatus === 'exceeded' && (
-          <div className="text-xs text-red-700 bg-red-50 p-2 rounded">
+          <div className="rounded bg-red-50 p-2 text-xs text-red-800 dark:bg-red-950/40 dark:text-red-200">
             ⚠️ Добавление новых предметов заблокировано. Удалите что-то или увеличьте бюджет
           </div>
         )}

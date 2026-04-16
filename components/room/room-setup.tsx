@@ -41,13 +41,13 @@ export default function RoomSetup({ onComplete }: RoomSetupProps) {
   }
 
   return (
-    <div className="room-setup-container w-full h-full animate-fade-in gap-3 p-2 md:gap-4 md:p-4">
+    <div className="room-setup-container h-full w-full gap-3 p-2 animate-fade-in md:gap-4 md:p-4">
       {/* Левая панель - настройки */}
-      <div className="w-full flex-shrink-0 space-y-3 overflow-y-auto max-h-full lg:w-80 lg:max-w-80 lg:min-w-80 md:space-y-4">
+      <div className="w-full flex-shrink-0 space-y-3 overflow-y-auto animate-slide-up md:space-y-4 lg:w-80 lg:max-w-80 lg:min-w-80">
         <RoomCreator onRoomCreated={handleRoomCreated} />
         
         {showInfo && (
-          <div className="space-y-3 animate-slide-up md:space-y-4">
+            <div className="space-y-3 animate-slide-up md:space-y-4">
             <RoomInfo />
             <StyleSelector />
             <StyleAnalyzer />
@@ -61,12 +61,13 @@ export default function RoomSetup({ onComplete }: RoomSetupProps) {
             {/* Кнопки действий */}
             <Card className="border-border/70 bg-card/90 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)]">
               <CardHeader>
-                <CardTitle className="text-lg">Действия</CardTitle>
+                <CardTitle className="text-lg" data-testid="room-actions-title">Действия</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
                 <Button 
                   className="w-full touch-punchy transition-all duration-300 hover:-translate-y-0.5" 
                   onClick={() => onComplete?.(roomDimensions)}
+                  data-testid="room-continue-button"
                 >
                   Продолжить к мебели
                 </Button>
@@ -74,6 +75,7 @@ export default function RoomSetup({ onComplete }: RoomSetupProps) {
                   variant="outline" 
                   className="w-full transition-all duration-300 hover:-translate-y-0.5"
                   onClick={() => setShowInfo(false)}
+                  data-testid="room-edit-dimensions-button"
                 >
                   Изменить размеры
                 </Button>
@@ -84,19 +86,19 @@ export default function RoomSetup({ onComplete }: RoomSetupProps) {
       </div>
 
       {/* Правая панель - 3D предпросмотр */}
-      <div className="flex-1 min-w-0 min-h-[400px] lg:min-h-[700px] overflow-hidden">
+      <div className="room-3d-viewport flex-1 min-w-0 overflow-hidden animate-reveal-gradient" style={{ animationDelay: '120ms' }}>
         {/* Предупреждения о бюджете */}
         <BudgetWarning className="mb-2 md:mb-4" />
         
-        <Card className="h-full w-full border-border/70 bg-card/85 shadow-[0_24px_60px_-38px_rgba(15,23,42,0.95)] backdrop-blur">
+        <Card className="h-full w-full border-border/70 bg-card/85 shadow-[0_24px_60px_-38px_rgba(15,23,42,0.95)] backdrop-blur transition-all-smooth">
           <CardHeader className="flex-shrink-0 py-2 md:py-3">
             <CardTitle className="text-lg">3D Предпросмотр</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 p-0 h-full overflow-hidden">
-            <div className="scene-container w-full h-full min-h-[350px] lg:min-h-[600px] rounded-b-lg overflow-hidden relative">
+            <div className="scene-container relative h-full w-full overflow-hidden rounded-b-lg min-h-[280px] sm:min-h-[340px] lg:min-h-[600px]">
               {/* Индикатор загрузки 3D сцены */}
               {is3DLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
                   <LoadingSpinner size="lg" text="Загрузка 3D сцены..." />
                 </div>
               )}

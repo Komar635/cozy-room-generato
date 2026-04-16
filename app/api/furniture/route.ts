@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FurnitureAPI } from '@/lib/services/furniture-api'
+import { parseCsvParam, parseOptionalNumberParam, parsePositiveIntegerParam } from '@/app/api/furniture/utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,18 +9,18 @@ export async function GET(request: NextRequest) {
     // Извлекаем параметры фильтрации
     const filters = {
       category: searchParams.get('category') || undefined,
-      minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
-      maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
-      colors: searchParams.get('colors')?.split(',').filter(Boolean) || undefined,
-      styles: searchParams.get('styles')?.split(',').filter(Boolean) || undefined,
-      brands: searchParams.get('brands')?.split(',').filter(Boolean) || undefined,
+      minPrice: parseOptionalNumberParam(searchParams.get('minPrice')),
+      maxPrice: parseOptionalNumberParam(searchParams.get('maxPrice')),
+      colors: parseCsvParam(searchParams.get('colors')),
+      styles: parseCsvParam(searchParams.get('styles')),
+      brands: parseCsvParam(searchParams.get('brands')),
       search: searchParams.get('search') || undefined,
     }
 
     // Параметры пагинации
     const pagination = {
-      page: searchParams.get('page') ? Number(searchParams.get('page')) : 1,
-      limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : 20,
+      page: parsePositiveIntegerParam(searchParams.get('page'), 1),
+      limit: parsePositiveIntegerParam(searchParams.get('limit'), 20),
     }
 
     // Получаем данные из Supabase

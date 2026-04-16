@@ -3,115 +3,96 @@
 ## Технологический стек
 
 ### Frontend
-- **Framework:** Next.js 14.0.4 (App Router)
-- **Language:** TypeScript 5.9.3
-- **UI Library:** React 18.3.1
-- **Styling:** Tailwind CSS 3.4.19
-- **UI Components:** shadcn/ui
-- **3D Graphics:** Three.js 0.158.0
-- **3D React:** @react-three/fiber 8.15.0, @react-three/drei 9.88.0
-- **State Management:** Zustand 4.5.7
-- **Icons:** Lucide React 0.294.0
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript 5.9.x
+- **UI:** React 18, Tailwind CSS 3.4, shadcn/ui, Radix UI
+- **3D:** Three.js, `@react-three/fiber`, `@react-three/drei`
+- **State:** Zustand
 
-### Backend
-- **API:** Next.js API Routes
-- **Database:** Supabase (PostgreSQL) - в процессе настройки
-- **Authentication:** NextAuth.js (планируется)
+### Backend и данные
+- **API слой:** Next.js Route Handlers в `app/api/**`
+- **Хранилище проектов:** локальный `localStorage`, JSON import/export, API-обертка для room save/load
+- **Каталог данных:** локальные TS/JSON базы мебели и шаблонов стилей
+- **Database groundwork:** Supabase client и SQL migration присутствуют, но постоянное серверное хранение комнат еще не доведено до рабочего потока
 
-### Development Tools
-- **Package Manager:** npm (с флагом --legacy-peer-deps для совместимости)
-- **Linting:** ESLint
-- **Type Checking:** TypeScript
+### AI и внешние сервисы
+- **Primary AI path:** `RoomGPTApiService` / внешние AI провайдеры
+- **Fallback AI:** `LocalAIService` для рекомендаций, планировки и оптимизации бюджета
+- **Image generation:** требует внешний ключ; локального фолбэка нет
+- **Marketplace/Supabase services:** код и заготовки интеграций присутствуют, использование остается частично опциональным
 
-### Hosting & Deployment
-- **Platform:** Vercel (планируется)
-- **Database:** Supabase Cloud
-
-## Окружение разработки
-
-### Системные требования
-- Node.js (версия совместимая с Next.js 14)
-- npm или yarn
-- Git
-
-### Переменные окружения (.env)
-```
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-
-# AI Services (опционально)
-OPENAI_API_KEY=
-REPLICATE_API_TOKEN=
-HUGGINGFACE_API_KEY=
-```
-
-### Порты
-- **Dev Server:** 3001 (3000 занят)
-- **Production:** 80/443
-
-## Ограничения и особенности
-
-### Технические ограничения
-1. **npm проблемы:** Некоторые пакеты требуют `--legacy-peer-deps`
-2. **React версия:** Используется React 18, некоторые пакеты требуют React 19
-3. **3D производительность:** Отключены тени и антиалиасинг для слабых устройств
-
-### Архитектурные решения
-1. **Асинхронные функции:** Все функции работы с данными асинхронные для совместимости с Supabase
-2. **Временные данные:** Используется локальный массив FURNITURE_DATABASE до настройки Supabase
-3. **Client-side рендеринг:** 3D компоненты используют 'use client' директиву
-
-### Зависимости от внешних сервисов
-1. **Supabase:** База данных (не настроен)
-2. **Маркетплейсы:** Wildberries, Ozon, Hoff (парсеры готовы)
-3. **AI API:** OpenAI, Replicate, HuggingFace (опционально)
-
-## CI/CD
-**Статус:** Не настроен
-
-**Планируется:**
-- GitHub Actions для тестов
-- Автоматический деплой на Vercel
-- Проверка типов TypeScript
-- Линтинг кода
-
-## Известные проблемы
-
-### 1. OrbitControls не работает
-- **Статус:** В работе
-- **Причина:** Возможно конфликт событий или неправильная настройка
-- **Решение:** Добавлены настройки enableZoom, enableRotate, makeDefault
-
-### 2. Отсутствие @react-three/fiber
-- **Статус:** Решено
-- **Решение:** Установлено через --legacy-peer-deps
-
-### 3. Webpack cache warnings
-- **Статус:** Не критично
-- **Описание:** Предупреждения при запуске dev сервера
-- **Влияние:** Не влияет на работу приложения
+### Инструменты разработки
+- **Linting:** ESLint (`next lint`)
+- **Unit/Integration tests:** Jest + Testing Library + `ts-jest`
+- **E2E tests:** Playwright
+- **Docs for QA:** `docs/TESTING.md`, `docs/CROSS_BROWSER_DEVICE_MATRIX.md`, `docs/3D_PERFORMANCE_BASELINE.md`
+- **3D perf tooling:** `/room/performance`, `RoomPerformanceProbe`, `scripts/collect-3d-performance.mjs`, JSON evidence in `docs/perf-evidence/`
 
 ## Скрипты
 
 ### Основные команды
 ```bash
-npm run dev          # Запуск dev сервера (порт 3001)
-npm run build        # Сборка для production
-npm run start        # Запуск production сервера
-npm run lint         # Проверка кода
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm test
+npm run test:unit
+npm run test:integration
+npm run test:e2e
+npm run perf:3d
 ```
 
-### Парсеры данных
+### Пакетные менеджеры
+- В репозитории есть `package-lock.json`, `pnpm-lock.yaml` и `bun.lock`.
+- Локальные скрипты описаны через npm-совместимый `package.json`.
+- CI и Vercel конфигурация ориентированы на pnpm.
+
+## Окружение
+
+### Системные требования
+- Node.js 18+ локально; в CI используется Node.js 20
+- Современный браузер с WebGL
+
+### Переменные окружения
 ```bash
-# Supabase парсер
-cd scripts/supabase-parser
-npm install
-npm start
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
-# PostgreSQL парсер (legacy)
-cd scripts/furniture-parser
-npm install
-npm start
+# AI providers
+OPENAI_API_KEY=
+REPLICATE_API_TOKEN=
+HUGGINGFACE_API_KEY=
+
+# AI localization / budgets
+MIN_BUDGET_RUB=
+MIN_DESIGN_BUDGET_RUB=
+CURRENCY=RUB
+LOCALE=ru-RU
+
+# Deployment
+NEXT_PUBLIC_APP_URL=
 ```
+
+### Порты
+- **Local dev:** обычно `3000`; исторически использовался и `3001`, если `3000` занят
+- **Playwright webServer:** `3100`
+
+## Архитектурные ограничения и особенности
+- 3D-сцена и тяжелые интерактивные модули загружаются как client-only через dynamic import.
+- Производительность WebGL адаптируется под устройство: quality presets, LOD, culling, lazy loading.
+- AI ответы и оптимизация форматируются под рубли и `ru-RU`.
+- Сохранение проекта имеет несколько путей, но серверный persistent backend для комнат пока не завершен.
+
+## CI/CD и деплой
+- **GitHub Actions:** `.github/workflows/deploy.yml`
+- **CI шаги:** checkout, Node 20, pnpm install, lint, build, test
+- **Особенность:** шаг `Run tests` помечен `continue-on-error: true`
+- **Hosting:** `vercel.json` настроен для Next.js, security headers и cache rules присутствуют
+
+## Известные проблемы
+- В части AI route handlers все еще встречаются поврежденные кириллические строки.
+- `test-results/` может содержать старые Playwright артефакты прошлых падений, даже если текущий matrix smoke уже проходит успешно.
+- Единый стандарт package manager в проекте пока не закреплен.

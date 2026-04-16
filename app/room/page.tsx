@@ -17,15 +17,15 @@ export default function RoomPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="container mx-auto py-4 h-screen flex flex-col">
-        <div className="text-center mb-4 space-y-2 flex-shrink-0">
-          <h1 className="text-3xl font-bold">Создание комнаты</h1>
-          <p className="text-lg text-muted-foreground">
+      <div className="container mx-auto flex min-h-[calc(100vh-4rem)] flex-col px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mb-4 flex-shrink-0 space-y-3 text-center md:mb-6">
+          <h1 className="text-2xl font-bold sm:text-3xl">Создание комнаты</h1>
+          <p className="text-base text-muted-foreground sm:text-lg">
             Настройте размеры комнаты и посмотрите результат в 3D
           </p>
           
           {/* Навигация */}
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-wrap justify-center gap-3">
             <Link href="/">
               <Button variant="outline" size="sm">
                 ← Главная
@@ -36,10 +36,15 @@ export default function RoomPage() {
                 🚀 Демо функций
               </Button>
             </Link>
+            <Link href="/room/performance">
+              <Button variant="outline" size="sm">
+                3D Perf Lab
+              </Button>
+            </Link>
           </div>
         </div>
         
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0">
           <RoomSetup onComplete={handleRoomComplete} />
         </div>
       </div>

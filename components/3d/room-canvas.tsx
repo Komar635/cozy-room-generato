@@ -1,22 +1,27 @@
 'use client'
 
-import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, Grid, Environment, PerspectiveCamera } from '@react-three/drei'
-import { Suspense, useEffect, useRef, useState, MutableRefObject, useMemo } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls, Grid, Environment } from '@react-three/drei'
+import { Suspense, useEffect, useRef, useState, MutableRefObject, useMemo, useCallback } from 'react'
 import { useRoomStore } from '@/store/room-store'
+import { PerformanceCaptureReport, PerformanceCaptureRequest } from '@/lib/three-performance'
 import { FurnitureItem, Vector3 } from '@/types/room'
-import { getOptimalCameraPosition, getDevicePerformanceLevel, getQualitySettings, RENDER_PRESETS } from '@/lib/three-utils'
+import { getQualitySettings, RENDER_PRESETS } from '@/lib/three-utils'
 import { FurnitureManager } from './furniture-manager'
 import { DropZone } from './drop-zone'
 import { LoadingSpinner } from '@/components/ui/loading'
+import { RoomPerformanceProbe } from './room-performance-probe'
 import * as THREE from 'three'
 
 interface RoomCanvasProps {
   onItemSelect?: (item: FurnitureItem | null) => void
   onItemMove?: (itemId: string, position: Vector3) => void
   onLoad?: () => void
+  onModelLoadingChange?: (message?: string) => void
   className?: string
   captureRef?: React.RefObject<HTMLCanvasElement | null>
+  performanceCapture?: PerformanceCaptureRequest | null
+  onPerformanceReport?: (report: PerformanceCaptureReport) => void
 }
 
 function Room() {
@@ -180,7 +185,14 @@ function FloorGrid() {
   )
 }
 
-function SceneContent({ onItemSelect, onItemMove, onLoad }: RoomCanvasProps) {
+function SceneContent({
+  onItemSelect,
+  onItemMove,
+  onLoad,
+  onModelLoadingChange,
+  performanceCapture,
+  onPerformanceReport
+}: RoomCanvasProps & { onModelLoadingChange?: (message?: string) => void }) {
   useEffect(() => {
     if (onLoad) {
       const timer = setTimeout(onLoad, 500)
@@ -204,7 +216,10 @@ function SceneContent({ onItemSelect, onItemMove, onLoad }: RoomCanvasProps) {
       <FurnitureManager
         onItemSelect={onItemSelect}
         onItemMove={onItemMove}
+        onModelLoadingChange={onModelLoadingChange}
       />
+
+      <RoomPerformanceProbe capture={performanceCapture ?? null} onComplete={onPerformanceReport} />
       
       <Environment preset="apartment" />
     </>
@@ -242,11 +257,17 @@ export default function RoomCanvas({
   onItemMove, 
   onLoad,
   className = "w-full h-full min-h-[400px]",
-  captureRef
+  captureRef,
+  performanceCapture,
+  onPerformanceReport
 }: RoomCanvasProps) {
   const [isClient, setIsClient] = useState(false)
+  const [modelLoadingMessage, setModelLoadingMessage] = useState<string | undefined>()
   const glRef = useRef<HTMLCanvasElement | null>(null)
   const { performanceLevel } = useRoomStore()
+  const handleModelLoadingChange = useCallback((message?: string) => {
+    setModelLoadingMessage(message)
+  }, [])
   
   const canvasSettings = useMemo(() => {
     const preset = performanceLevel === 'low' ? RENDER_PRESETS.MOBILE : 
@@ -278,6 +299,14 @@ export default function RoomCanvas({
   return (
     <div className={className} style={{ touchAction: 'none' }}>
       <PreloadingOverlay />
+      {modelLoadingMessage && (
+        <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 rounded-xl border border-border/60 bg-background/90 p-3 shadow-lg backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <LoadingSpinner size="sm" />
+            <p className="text-sm text-muted-foreground">{modelLoadingMessage}</p>
+          </div>
+        </div>
+      )}
       <Canvas
         camera={{
           position: [10, 8, 10],
@@ -302,6 +331,10 @@ export default function RoomCanvas({
           <SceneContent 
             onItemSelect={onItemSelect}
             onItemMove={onItemMove}
+            onLoad={onLoad}
+            onModelLoadingChange={handleModelLoadingChange}
+            performanceCapture={performanceCapture}
+            onPerformanceReport={onPerformanceReport}
           />
         </Suspense>
       </Canvas>

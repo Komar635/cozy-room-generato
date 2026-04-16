@@ -96,7 +96,7 @@ export default function AIRecommendations() {
   return (
     <Card className="w-full border-border/70 bg-card/90 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)] animate-slide-up">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2" data-testid="ai-recommendations-title">
           🧠 ИИ Рекомендации
           {getSourceBadge()}
         </CardTitle>
@@ -107,26 +107,26 @@ export default function AIRecommendations() {
       
       <CardContent className="space-y-4">
         {/* Информация о текущих параметрах */}
-        <div className="p-3 bg-muted rounded-md text-sm">
-          <p><strong>Размеры:</strong> {roomDimensions.width} × {roomDimensions.height} × {roomDimensions.depth} м</p>
-          <p><strong>Стиль:</strong> {selectedStyle}</p>
-          <p><strong>Бюджет:</strong> {formatPrice(budget)}</p>
-          <p><strong>Текущая мебель:</strong> {furniture.length} предметов</p>
+        <div className="p-3 bg-muted rounded-md text-sm" data-testid="ai-recommendations-context">
+          <p data-testid="ai-context-dimensions"><strong>Размеры:</strong> {roomDimensions.width} × {roomDimensions.height} × {roomDimensions.depth} м</p>
+          <p data-testid="ai-context-style"><strong>Стиль:</strong> {selectedStyle}</p>
+          <p data-testid="ai-context-budget"><strong>Бюджет:</strong> {formatPrice(budget)}</p>
+          <p data-testid="ai-context-furniture-count"><strong>Текущая мебель:</strong> {furniture.length} предметов</p>
         </div>
 
         {/* Статус API сервисов */}
         {apiStatus && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-sm">
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-sm" data-testid="ai-status-panel">
             <p className="font-medium text-blue-800">Статус ИИ сервисов:</p>
             <div className="mt-1 space-y-1">
-              <p className="text-blue-700">
+              <p className="text-blue-700" data-testid="ai-status-roomgpt">
                 • RoomGPT API: {apiStatus.roomgpt?.available ? '✅ Доступен' : '❌ Недоступен'}
               </p>
-              <p className="text-blue-700">
+              <p className="text-blue-700" data-testid="ai-status-local">
                 • Локальный ИИ: ✅ Всегда доступен
               </p>
             </div>
-            <p className="mt-2 text-blue-600 italic">{apiStatus.recommendation}</p>
+            <p className="mt-2 text-blue-600 italic" data-testid="ai-status-recommendation">{apiStatus.recommendation}</p>
           </div>
         )}
 
@@ -136,13 +136,14 @@ export default function AIRecommendations() {
           className="w-full"
           loading={isLoading}
           loadingText="Загрузка рекомендаций..."
+          data-testid="ai-recommendations-trigger"
         >
           Получить ИИ рекомендации
         </AsyncButton>
 
         {/* Индикатор загрузки */}
         {isLoading && (
-          <div className="flex items-center gap-3 rounded-xl border border-primary/15 bg-primary/5 p-4 animate-fade-in">
+          <div className="flex items-center gap-3 rounded-xl border border-primary/15 bg-primary/5 p-4 animate-fade-in" data-testid="ai-recommendations-loading">
             <LoadingSpinner size="sm" />
             <div className="text-sm text-muted-foreground">
               Анализируем вашу комнату и подбираем оптимальные варианты...
@@ -152,14 +153,19 @@ export default function AIRecommendations() {
 
         {/* Список рекомендаций */}
         {recommendations.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-3" data-testid="ai-recommendations-list">
             <h4 className="font-medium">Рекомендации ИИ:</h4>
             {recommendations.map((rec, index) => (
-              <div key={rec.id} className="stagger-item space-y-2 rounded-xl border border-border/70 bg-card/60 p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md" style={{ animationDelay: `${index * 60}ms` }}>
+              <div
+                key={rec.id}
+                className="stagger-item space-y-2 rounded-xl border border-border/70 bg-card/60 p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+                style={{ animationDelay: `${index * 60}ms` }}
+                data-testid={`ai-recommendation-card-${rec.id}`}
+              >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h5 className="font-medium">{rec.name}</h5>
-                    <p className="text-sm text-muted-foreground capitalize">{rec.category}</p>
+                    <h5 className="font-medium" data-testid={`ai-recommendation-name-${rec.id}`}>{rec.name}</h5>
+                    <p className="text-sm text-muted-foreground capitalize" data-testid={`ai-recommendation-category-${rec.id}`}>{rec.category}</p>
                     {rec.adaptedForRussia && (
                       <Badge variant="outline" className="mt-1 text-xs">
                         Адаптировано для РФ
@@ -167,20 +173,21 @@ export default function AIRecommendations() {
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">
+                    <p className="font-medium" data-testid={`ai-recommendation-price-${rec.id}`}>
                       {rec.priceFormatted || formatPrice(rec.price)}
                     </p>
-                    <p className={`text-xs ${getConfidenceColor(rec.confidence)}`}>
+                    <p className={`text-xs ${getConfidenceColor(rec.confidence)}`} data-testid={`ai-recommendation-confidence-${rec.id}`}>
                       Уверенность: {Math.round(rec.confidence * 100)}%
                     </p>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">{rec.reason}</p>
+                <p className="text-sm text-muted-foreground" data-testid={`ai-recommendation-reason-${rec.id}`}>{rec.reason}</p>
                 <AsyncButton 
                   size="sm" 
                   variant="outline" 
                   className="w-full"
                   onClick={() => addRecommendationToRoom(rec)}
+                  data-testid={`ai-add-recommendation-${rec.id}`}
                 >
                   Добавить в комнату
                 </AsyncButton>

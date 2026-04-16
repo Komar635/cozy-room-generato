@@ -6,13 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoadingSpinner } from '@/components/ui/loading'
 
 export default function RoomGPTSetup() {
   const [apiStatus, setApiStatus] = useState<any>(null)
   const [isChecking, setIsChecking] = useState(false)
-  const [apiKey, setApiKey] = useState('')
-  const [apiUrl, setApiUrl] = useState('https://api.roomgpt.io')
-
   const checkApiStatus = async () => {
     setIsChecking(true)
     try {
@@ -33,20 +31,6 @@ export default function RoomGPTSetup() {
   useEffect(() => {
     checkApiStatus()
   }, [])
-
-  const getStatusColor = () => {
-    if (!apiStatus) return 'text-gray-500'
-    if (apiStatus.available) return 'text-green-600'
-    if (apiStatus.hasApiKey) return 'text-orange-600'
-    return 'text-red-600'
-  }
-
-  const getStatusText = () => {
-    if (!apiStatus) return 'Проверка...'
-    if (apiStatus.available) return '✅ RoomGPT API подключен и работает'
-    if (apiStatus.hasApiKey) return '⚠️ API ключ настроен, но сервис недоступен'
-    return '❌ API ключ не настроен'
-  }
 
   return (
     <Card className="w-full max-w-2xl">
@@ -73,6 +57,17 @@ export default function RoomGPTSetup() {
               {isChecking ? 'Проверка...' : 'Проверить'}
             </Button>
           </div>
+
+          {isChecking && (
+            <div className="mb-3 rounded-md border border-border/60 bg-muted/30 p-3">
+              <div className="flex items-center gap-3">
+                <LoadingSpinner size="sm" />
+                <p className="text-sm text-muted-foreground">
+                  Проверяем доступность провайдеров RoomGPT и внешних AI сервисов...
+                </p>
+              </div>
+            </div>
+          )}
           
           {apiStatus && (
             <div className="space-y-2">

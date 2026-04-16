@@ -38,10 +38,10 @@ export function Slider({
   return (
     <div className={cn('relative w-full', className)}>
       {/* Трек слайдера */}
-      <div className="relative h-2 bg-gray-200 rounded-full">
+      <div className="relative h-2 rounded-full bg-muted">
         {/* Активная область */}
         <div 
-          className="absolute h-2 bg-blue-600 rounded-full"
+          className="absolute h-2 rounded-full bg-primary"
           style={{
             left: `${minPercent}%`,
             width: `${maxPercent - minPercent}%`
@@ -77,22 +77,22 @@ export function Slider({
           height: 20px;
           width: 20px;
           border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+           background: hsl(var(--primary));
+           cursor: pointer;
+           border: 2px solid hsl(var(--background));
+           box-shadow: 0 2px 6px rgba(0,0,0,0.25);
         }
         
         .slider-thumb::-moz-range-thumb {
           height: 20px;
           width: 20px;
           border-radius: 50%;
-          background: #3b82f6;
-          cursor: pointer;
-          border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-      `}</style>
+           background: hsl(var(--primary));
+           cursor: pointer;
+           border: 2px solid hsl(var(--background));
+           box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+         }
+       `}</style>
     </div>
   )
 }

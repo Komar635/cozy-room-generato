@@ -5,22 +5,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 const RoomSetup = dynamic(() => import('@/components/room/room-setup'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-64">Р—Р°РіСЂСѓР·РєР°...</div>
+  loading: () => <div className="flex h-64 items-center justify-center">Загрузка комнаты...</div>
 })
 
 const AIRecommendations = dynamic(() => import('@/components/ai/ai-recommendations'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-32">Р—Р°РіСЂСѓР·РєР° AI...</div>
+  loading: () => <div className="flex h-32 items-center justify-center">Загрузка рекомендаций...</div>
 })
 
 const BudgetOptimizer = dynamic(() => import('@/components/ai/budget-optimizer'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-32">Р—Р°РіСЂСѓР·РєР° РѕРїС‚РёРјРёР·Р°С‚РѕСЂР°...</div>
+  loading: () => <div className="flex h-32 items-center justify-center">Загрузка оптимизатора...</div>
 })
 
 const ImageGenerator = dynamic(() => import('@/components/ai/image-generator'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-32">Р—Р°РіСЂСѓР·РєР° РіРµРЅРµСЂР°С‚РѕСЂР°...</div>
+  loading: () => <div className="flex h-32 items-center justify-center">Загрузка генератора...</div>
 })
 
 export default function ApiDemoPage() {
@@ -28,37 +28,38 @@ export default function ApiDemoPage() {
     <main className="min-h-screen bg-background">
       <div className="container mx-auto py-8 space-y-8">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold">API Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ</h1>
+          <h1 className="text-4xl font-bold" data-testid="api-demo-title">Демо API и AI функций</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ РІСЃРµС… API С„СѓРЅРєС†РёР№ РїСЂРёР»РѕР¶РµРЅРёСЏ &quot;РЎРѕР·РґР°С‚РµР»СЊ РЈСЋС‚РЅС‹С… РљРѕРјРЅР°С‚&quot;
+            Здесь можно проверить ключевые API-сценарии приложения: валидацию комнаты,
+            ИИ-рекомендации, оптимизацию бюджета и генерацию визуализаций.
           </p>
         </div>
 
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
-            <CardTitle>рџљЂ РЎС‚Р°С‚СѓСЃ API РёРЅС‚РµРіСЂР°С†РёРё</CardTitle>
+            <CardTitle>Статус API интеграции</CardTitle>
             <CardDescription>
-              РўРµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ API С„СѓРЅРєС†РёР№ РІ РїСЂРёР»РѕР¶РµРЅРёРё
+              Текущее состояние подключенных API и локальных fallback-механизмов.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <h4 className="font-medium text-green-600">вњ… Р“РѕС‚РѕРІС‹Рµ API</h4>
+                <h4 className="font-medium text-green-600">Готово сейчас</h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>вЂў Р’Р°Р»РёРґР°С†РёСЏ СЂР°Р·РјРµСЂРѕРІ РєРѕРјРЅР°С‚С‹</li>
-                  <li>вЂў РЎРѕС…СЂР°РЅРµРЅРёРµ/Р·Р°РіСЂСѓР·РєР° РїСЂРѕРµРєС‚РѕРІ</li>
-                  <li>вЂў Р—Р°РіР»СѓС€РєРё AI СЂРµРєРѕРјРµРЅРґР°С†РёР№</li>
-                  <li>вЂў Р—Р°РіР»СѓС€РєРё РѕРїС‚РёРјРёР·Р°С†РёРё Р±СЋРґР¶РµС‚Р°</li>
+                  <li>Валидация размеров комнаты</li>
+                  <li>Сохранение и загрузка проектов</li>
+                  <li>Локальные ИИ-рекомендации</li>
+                  <li>Базовая оптимизация бюджета</li>
                 </ul>
               </div>
               <div className="space-y-2">
-                <h4 className="font-medium text-orange-600">рџ”„ Р’ СЂР°Р·СЂР°Р±РѕС‚РєРµ (Р—Р°РґР°С‡Р° 9)</h4>
+                <h4 className="font-medium text-orange-600">Доступно при внешних ключах</h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>вЂў RoomGPT API РёРЅС‚РµРіСЂР°С†РёСЏ</li>
-                  <li>вЂў OpenAI РґР»СЏ Р°РЅР°Р»РёР·Р° СЃС‚РёР»РµР№</li>
-                  <li>вЂў Replicate РґР»СЏ РіРµРЅРµСЂР°С†РёРё РёР·РѕР±СЂР°Р¶РµРЅРёР№</li>
-                  <li>вЂў Р РµР°Р»СЊРЅС‹Р№ РєР°С‚Р°Р»РѕРі РјРµР±РµР»Рё</li>
+                  <li>RoomGPT API интеграция</li>
+                  <li>OpenAI для улучшенных рекомендаций</li>
+                  <li>Replicate или HuggingFace для изображений</li>
+                  <li>Расширенный каталог мебели</li>
                 </ul>
               </div>
             </div>
@@ -68,7 +69,7 @@ export default function ApiDemoPage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           <div className="xl:col-span-2">
             <RoomSetup onComplete={(dimensions) => {
-              console.log('РљРѕРјРЅР°С‚Р° СЃРѕР·РґР°РЅР°:', dimensions)
+              console.log('Комната создана:', dimensions)
             }} />
           </div>
 
@@ -81,7 +82,7 @@ export default function ApiDemoPage() {
 
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
-            <CardTitle>рџ”§ РўРµС…РЅРёС‡РµСЃРєР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ</CardTitle>
+            <CardTitle>Техническая информация</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -95,17 +96,17 @@ export default function ApiDemoPage() {
             </div>
 
             <div>
-              <h4 className="font-medium mb-2">РЎРµСЂРІРёСЃРЅС‹Рµ РєР»Р°СЃСЃС‹:</h4>
+              <h4 className="font-medium mb-2">Сервисные классы:</h4>
               <div className="text-sm font-mono space-y-1">
-                <div>RoomApiService - СЂР°Р±РѕС‚Р° СЃ РєРѕРјРЅР°С‚Р°РјРё</div>
-                <div>AIApiService - AI С„СѓРЅРєС†РёРё</div>
+                <div>RoomApiService - работа с параметрами комнаты</div>
+                <div>AIApiService - рекомендации, бюджет и визуализации</div>
               </div>
             </div>
 
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
               <p className="text-yellow-700 text-sm">
-                <strong>РџСЂРёРјРµС‡Р°РЅРёРµ:</strong> AI С„СѓРЅРєС†РёРё СЃРµР№С‡Р°СЃ РІРѕР·РІСЂР°С‰Р°СЋС‚ С‚РµСЃС‚РѕРІС‹Рµ РґР°РЅРЅС‹Рµ.
-                Р РµР°Р»СЊРЅР°СЏ РёРЅС‚РµРіСЂР°С†РёСЏ СЃ RoomGPT API Р±СѓРґРµС‚ РІС‹РїРѕР»РЅРµРЅР° РІ Р·Р°РґР°С‡Рµ 9.
+                <strong>Примечание:</strong> без внешних ключей AI-блоки используют локальные fallback-алгоритмы,
+                поэтому демо остается рабочим и в тестовой среде.
               </p>
             </div>
           </CardContent>

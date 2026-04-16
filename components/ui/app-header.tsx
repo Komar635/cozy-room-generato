@@ -49,7 +49,7 @@ export function AppHeader() {
   }, [pathname])
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/85 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.8)] backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
+    <header className="sticky top-0 z-40 w-full animate-fade-in border-b border-border/80 bg-background/85 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.8)] backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
       <div className="container mx-auto flex h-16 items-center gap-3 px-3 sm:px-4">
         {/* Логотип */}

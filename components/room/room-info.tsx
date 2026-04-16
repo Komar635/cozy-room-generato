@@ -17,7 +17,7 @@ export default function RoomInfo() {
   return (
     <Card className="w-full border-border/70 bg-card/90 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.9)] animate-slide-up">
       <CardHeader>
-        <CardTitle className="text-lg">Информация о комнате</CardTitle>
+        <CardTitle className="text-lg" data-testid="room-info-title">Информация о комнате</CardTitle>
       </CardHeader>
       
       <CardContent>
@@ -28,15 +28,15 @@ export default function RoomInfo() {
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span>Ширина:</span>
-                <span className="font-mono">{width.toFixed(1)} м</span>
+                <span className="font-mono" data-testid="room-info-width">{width.toFixed(1)} м</span>
               </div>
               <div className="flex justify-between">
                 <span>Высота:</span>
-                <span className="font-mono">{height.toFixed(1)} м</span>
+                <span className="font-mono" data-testid="room-info-height">{height.toFixed(1)} м</span>
               </div>
               <div className="flex justify-between">
                 <span>Глубина:</span>
-                <span className="font-mono">{depth.toFixed(1)} м</span>
+                <span className="font-mono" data-testid="room-info-depth">{depth.toFixed(1)} м</span>
               </div>
             </div>
           </div>
@@ -47,15 +47,15 @@ export default function RoomInfo() {
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span>Площадь пола:</span>
-                <span className="font-mono">{floorArea.toFixed(1)} м²</span>
+                <span className="font-mono" data-testid="room-info-floor-area">{floorArea.toFixed(1)} м²</span>
               </div>
               <div className="flex justify-between">
                 <span>Объем:</span>
-                <span className="font-mono">{volume.toFixed(1)} м³</span>
+                <span className="font-mono" data-testid="room-info-volume">{volume.toFixed(1)} м³</span>
               </div>
               <div className="flex justify-between">
                 <span>Периметр:</span>
-                <span className="font-mono">{perimeter.toFixed(1)} м</span>
+                <span className="font-mono" data-testid="room-info-perimeter">{perimeter.toFixed(1)} м</span>
               </div>
             </div>
           </div>

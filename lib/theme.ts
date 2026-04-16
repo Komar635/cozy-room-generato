@@ -48,7 +48,7 @@ export const useThemeStore = create<ThemeState>()(
       setTheme: (theme) => {
         const normalizedTheme = normalizeTheme(theme)
         const resolvedTheme = getResolvedTheme(normalizedTheme)
-        set({ theme, resolvedTheme })
+        set({ theme: normalizedTheme, resolvedTheme })
 
         applyThemeToDocument(resolvedTheme)
       },

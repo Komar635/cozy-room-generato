@@ -6,6 +6,26 @@ import { ThemeProvider } from '@/components/providers/theme-provider'
 import { StoreFeedbackProvider } from '@/components/providers/store-feedback-provider'
 import { ToastProvider } from '@/components/ui/toast'
 
+const themeInitScript = `
+(() => {
+  try {
+    const storageValue = window.localStorage.getItem('theme-storage')
+    const parsedValue = storageValue ? JSON.parse(storageValue) : null
+    const savedTheme = parsedValue?.state?.theme ?? 'system'
+    const resolvedTheme = savedTheme === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : savedTheme
+
+    const root = document.documentElement
+    root.classList.toggle('dark', resolvedTheme === 'dark')
+    root.dataset.theme = resolvedTheme
+    root.style.colorScheme = resolvedTheme
+  } catch (error) {
+    document.documentElement.style.colorScheme = 'light'
+  }
+})()
+`
+
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -20,6 +40,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={inter.className}>
         <ThemeProvider>
           <ToastProvider>

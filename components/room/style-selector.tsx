@@ -150,6 +150,7 @@ export default function StyleSelector() {
           return (
             <Card
               key={style.id}
+              data-testid={`style-card-${style.id}`}
               className={cn(
                 "cursor-pointer overflow-hidden border-border/70 bg-card/85 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-2 hover:ring-primary/30",
                 selectedStyle === style.id ? "ring-2 ring-primary border-primary shadow-lg" : "",

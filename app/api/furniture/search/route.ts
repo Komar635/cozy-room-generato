@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { FurnitureAPI } from '@/lib/services/furniture-api'
+import { parsePositiveIntegerParam } from '@/app/api/furniture/utils'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q')
-    const limit = searchParams.get('limit') ? Number(searchParams.get('limit')) : 10
+    const limit = parsePositiveIntegerParam(searchParams.get('limit'), 10)
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
