@@ -1,0 +1,4 @@
+# file: C:\Users\Mark\Documents\My projects\Restvration\services\photogrammetry\app\error_logger.py
+# hypothesis_version: 6.151.6
+
+['context', 'critical', 'error', 'error_details', 'error_message', 'error_type', 'info', 'job_id', 'photo_count', 'photo_urls', 'processing_stage', 'project_id', 'recommendations', 'severity', 'timestamp', 'traceback', 'warning']

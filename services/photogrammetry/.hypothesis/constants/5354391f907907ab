@@ -1,0 +1,4 @@
+# file: C:\Users\Mark\Documents\My projects\Restvration\services\photogrammetry\app\validators.py
+# hypothesis_version: 6.151.6
+
+[0.2, 225, 720, 1024, 1280, '.jpeg', '.jpg', '.png', 'L', 'RGB', 'insufficient_photos', 'insufficient_quality', 'jpeg', 'jpg', 'png']

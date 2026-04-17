@@ -1,0 +1,4 @@
+# file: C:\Users\Mark\Documents\My projects\Restvration\services\photogrammetry\app\storage.py
+# hypothesis_version: 6.151.6
+
+['/', 'completed', 'completed_at', 'error_message', 'failed', 'id', 'is_original', 'model_type', 'models-3d', 'models_3d', 'now()', 'processing', 'processing_job_id', 'processing_jobs', 'progress', 'project_id', 'rb', 'started_at', 'status', 'storage_path', 'url', 'wb']

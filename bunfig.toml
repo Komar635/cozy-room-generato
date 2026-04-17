@@ -1,0 +1,8 @@
+[install]
+# Настройки установки пакетов
+production = false
+optional = true
+
+[test]
+# Настройки тестирования
+preload = ["./jest.setup.js"]

@@ -1,0 +1,4 @@
+# file: C:\Users\Mark\Documents\My projects\Restvration\services\photogrammetry\app\photogrammetry_service.py
+# hypothesis_version: 6.151.6
+
+[100, '*', 'bin', 'completed', 'completed_at', 'created_at', 'error_message', 'failed', 'gaussian-splatting', 'id', 'insufficient_photos', 'job_type', 'model_type', 'models_3d', 'nerf', 'pending', 'photogrammetry', 'ply', 'processing', 'processing_jobs', 'progress', 'project_id', 'scan', 'started_at', 'status', 'storage_path', 'url', 'w']

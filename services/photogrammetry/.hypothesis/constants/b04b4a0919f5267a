@@ -1,0 +1,4 @@
+# file: C:\Users\Mark\Documents\My projects\Restvration\services\photogrammetry\app\models.py
+# hypothesis_version: 6.151.6
+
+[100, 'List of photo URLs', 'Photo ID', 'Progress percentage', 'Project ID', 'completed', 'failed', 'gaussian-splatting', 'nerf', 'pending', 'processing']

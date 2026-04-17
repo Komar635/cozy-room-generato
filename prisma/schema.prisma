@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Хешированный пароль
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Связи
+  projects Project[]
+
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  thumbnailUrl String? @map("thumbnail_url")
+  status      String   @default("created")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Связи
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos      Photo[]
+  models3d    Model3D[]
+  processingJobs ProcessingJob[]
+
+  @@map("projects")
+}
+
+model Photo {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  storagePath String   @map("storage_path")
+  url         String
+  sizeBytes   Int?     @map("size_bytes")
+  uploadedAt  DateTime @default(now()) @map("uploaded_at")
+
+  // Связи
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("photos")
+}
+
+model Model3D {
+  id              String   @id @default(uuid())
+  projectId       String   @map("project_id")
+  parentModelId   String?  @map("parent_model_id")
+  modelType       String   @map("model_type") // 'gaussian-splatting' или 'nerf'
+  storagePath     String   @map("storage_path")
+  url             String
+  isOriginal      Boolean  @default(true) @map("is_original")
+  processingJobId String?  @map("processing_job_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Связи
+  project         Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentModel     Model3D?       @relation("ModelVersions", fields: [parentModelId], references: [id], onDelete: SetNull)
+  childModels     Model3D[]      @relation("ModelVersions")
+  styleAnalyses   StyleAnalysis[]
+  modifications   Modification[] @relation("OriginalModel")
+  modifiedModels  Modification[] @relation("ModifiedModel")
+
+  @@map("models_3d")
+}
+
+model StyleAnalysis {
+  id               String   @id @default(uuid())
+  modelId          String   @map("model_id")
+  styleDescription String?  @map("style_description")
+  dominantColors   Json?    @map("dominant_colors")
+  materials        Json?
+  styleTags        String[] @map("style_tags")
+  analyzedAt       DateTime @default(now()) @map("analyzed_at")
+
+  // Связи
+  model Model3D @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@map("style_analyses")
+}
+
+model ModificationSuggestion {
+  id               String   @id @default(uuid())
+  modelId          String   @map("model_id")
+  modificationType String   @map("modification_type")
+  description      String
+  parameters       Json
+  previewUrl       String?  @map("preview_url")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@map("modification_suggestions")
+}
+
+model Modification {
+  id                String   @id @default(uuid())
+  originalModelId   String   @map("original_model_id")
+  modifiedModelId   String?  @map("modified_model_id")
+  modificationType  String   @map("modification_type")
+  parameters        Json
+  status            String   @default("pending")
+  processingJobId   String?  @map("processing_job_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+  completedAt       DateTime? @map("completed_at")
+
+  // Связи
+  originalModel  Model3D @relation("OriginalModel", fields: [originalModelId], references: [id], onDelete: Cascade)
+  modifiedModel  Model3D? @relation("ModifiedModel", fields: [modifiedModelId], references: [id], onDelete: Cascade)
+  materialSpecs  MaterialSpecification[]
+
+  @@map("modifications")
+}
+
+model MaterialSpecification {
+  id             String   @id @default(uuid())
+  modificationId String   @map("modification_id")
+  materials      Json
+  instructions   String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Связи
+  modification Modification @relation(fields: [modificationId], references: [id], onDelete: Cascade)
+
+  @@map("material_specifications")
+}
+
+model ProcessingJob {
+  id           String    @id
+  jobType      String    @map("job_type") // 'scan', 'modify'
+  projectId    String    @map("project_id")
+  status       String    @default("pending")
+  progress     Int       @default(0)
+  errorMessage String?   @map("error_message")
+  startedAt    DateTime? @map("started_at")
+  completedAt  DateTime? @map("completed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  // Связи
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("processing_jobs")
+}
