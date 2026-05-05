@@ -1,66 +1,119 @@
-'use client';
+"use client";
 
-import { useRef, useEffect, useState } from 'react';
-import { Group, Float32BufferAttribute, BufferGeometry } from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useRef, useState } from "react";
+import {
+	type BufferGeometry,
+	Color,
+	Float32BufferAttribute,
+	type Group,
+} from "three";
+import { PLYLoader } from "three/examples/jsm/loaders/PLYLoader.js";
 
 interface GaussianSplattingLoaderProps {
-  url: string;
-  onLoad?: () => void;
-  onError?: (error: Error) => void;
+	url: string;
+	onLoad?: () => void;
+	onError?: (error: Error) => void;
 }
 
-export default function GaussianSplattingLoader({ 
-  url, 
-  onLoad, 
-  onError 
+export default function GaussianSplattingLoader({
+	url,
+	onLoad,
+	onError,
 }: GaussianSplattingLoaderProps) {
-  const groupRef = useRef<Group>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+	const groupRef = useRef<Group>(null);
+	const [geometry, setGeometry] = useState<BufferGeometry | null>(null);
 
-  const geometry = new BufferGeometry();
-  const positions = new Float32Array(Array.from({ length: 3000 }, () => (Math.random() - 0.5) * 4));
-  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+	useEffect(() => {
+		let cancelled = false;
 
-  useEffect(() => {
-    const loadGaussianSplatting = async () => {
-      try {
-        console.log('Loading Gaussian Splatting from:', url);
-        
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        setIsLoaded(true);
-        onLoad?.();
-      } catch (error) {
-        console.error('Failed to load Gaussian Splatting:', error);
-        onError?.(error as Error);
-      }
-    };
+		const loadGaussianSplattingPreview = async () => {
+			try {
+				const loadedGeometry = await new Promise<BufferGeometry>(
+					(resolve, reject) => {
+						new PLYLoader().load(url, resolve, undefined, (error) => {
+							reject(
+								error instanceof Error
+									? error
+									: new Error("Failed to load PLY model"),
+							);
+						});
+					},
+				);
 
-    loadGaussianSplatting();
-  }, [url, onLoad, onError]);
+				if (cancelled) {
+					loadedGeometry.dispose();
+					return;
+				}
 
-  useFrame((state, delta) => {
-    if (groupRef.current && isLoaded) {
-      groupRef.current.rotation.y += delta * 0.2;
-    }
-  });
+				loadedGeometry.computeBoundingSphere();
+				loadedGeometry.computeVertexNormals();
+				ensureVertexColors(loadedGeometry);
 
-  if (!isLoaded) {
-    return null;
-  }
+				setGeometry(loadedGeometry);
+				onLoad?.();
+			} catch (error) {
+				if (!cancelled) {
+					onError?.(error as Error);
+				}
+			}
+		};
 
-  return (
-    <group ref={groupRef}>
-      <points geometry={geometry}>
-        <pointsMaterial
-          size={0.05}
-          color="#ff6b6b"
-          sizeAttenuation={true}
-          transparent={true}
-          opacity={0.8}
-        />
-      </points>
-    </group>
-  );
+		loadGaussianSplattingPreview();
+
+		return () => {
+			cancelled = true;
+			setGeometry((currentGeometry) => {
+				currentGeometry?.dispose();
+				return null;
+			});
+		};
+	}, [url, onLoad, onError]);
+
+	useFrame((_, delta) => {
+		if (groupRef.current && geometry) {
+			groupRef.current.rotation.y += delta * 0.12;
+		}
+	});
+
+	if (!geometry) {
+		return null;
+	}
+
+	return (
+		<group ref={groupRef} frustumCulled>
+			<points geometry={geometry} frustumCulled>
+				<pointsMaterial
+					size={0.025}
+					vertexColors={true}
+					sizeAttenuation={true}
+					transparent={true}
+					opacity={0.95}
+					depthWrite={false}
+				/>
+			</points>
+		</group>
+	);
+}
+
+function ensureVertexColors(geometry: BufferGeometry) {
+	if (geometry.getAttribute("color")) {
+		return;
+	}
+
+	const position = geometry.getAttribute("position");
+	if (!position) {
+		return;
+	}
+
+	const colors = new Float32Array(position.count * 3);
+	const defaultColor = new Color("#d97757");
+	for (let index = 0; index < position.count; index += 1) {
+		const offset = index * 3;
+		colors[offset] = defaultColor.r;
+		colors[offset + 1] = defaultColor.g;
+		colors[offset + 2] = defaultColor.b;
+	}
+
+	geometry.setAttribute("color", new Float32BufferAttribute(colors, 3));
 }

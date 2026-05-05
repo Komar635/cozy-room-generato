@@ -1,1 +1,1 @@
-export { StyleAnalysisPanel } from './StyleAnalysisPanel';
+export { StyleAnalysisPanel } from "./StyleAnalysisPanel";

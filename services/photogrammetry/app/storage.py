@@ -1,116 +1,121 @@
-"""Supabase Storage integration."""
+"""PostgreSQL + Yandex Object Storage integration."""
+
+from datetime import datetime, timezone
 from typing import Optional
-from supabase import create_client, Client
-from app.config import settings
+from urllib.parse import urlparse
 import logging
+import uuid
+
+import boto3
+import psycopg
+import requests
+
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 
-class SupabaseStorage:
-    """Wrapper for Supabase Storage operations."""
-    
+class AppStorage:
+    """Wrapper for PostgreSQL metadata and Yandex Object Storage files."""
+
     def __init__(self):
-        """Initialize Supabase client."""
-        self.client: Client = create_client(
-            settings.supabase_url,
-            settings.supabase_service_role_key
+        self.bucket_name = settings.yc_storage_bucket
+        self.public_base_url = settings.yc_storage_public_url.rstrip("/")
+        self.s3_client = boto3.client(
+            "s3",
+            region_name=settings.yc_storage_region,
+            endpoint_url=settings.yc_storage_endpoint,
+            aws_access_key_id=settings.yc_storage_access_key,
+            aws_secret_access_key=settings.yc_storage_secret_key,
         )
-        self.bucket_name = "models-3d"
-    
+
+    def _connect(self):
+        return psycopg.connect(settings.database_url)
+
+    def _public_url(self, storage_path: str) -> str:
+        if self.public_base_url:
+            return f"{self.public_base_url}/{storage_path}"
+        return f"https://{self.bucket_name}.storage.yandexcloud.net/{storage_path}"
+
     async def upload_model(self, file_path: str, storage_path: str) -> str:
-        """
-        Upload a 3D model file to Supabase Storage.
-        
-        Args:
-            file_path: Local path to the model file
-            storage_path: Destination path in storage
-            
-        Returns:
-            Public URL of the uploaded file
-        """
+        """Upload a 3D model file to Yandex Object Storage."""
+        if not self.bucket_name:
+            raise RuntimeError("YC_STORAGE_BUCKET is not configured")
+
         try:
-            with open(file_path, 'rb') as f:
-                file_data = f.read()
-            
-            response = self.client.storage.from_(self.bucket_name).upload(
-                storage_path,
-                file_data
-            )
-            
-            # Get public URL
-            public_url = self.client.storage.from_(self.bucket_name).get_public_url(storage_path)
-            
-            logger.info(f"Model uploaded successfully to {storage_path}")
-            return public_url
-            
-        except Exception as e:
-            logger.error(f"Failed to upload model: {str(e)}")
+            with open(file_path, "rb") as file:
+                self.s3_client.put_object(
+                    Bucket=self.bucket_name,
+                    Key=storage_path,
+                    Body=file,
+                    ContentType="model/ply",
+                )
+
+            logger.info("Model uploaded successfully to %s", storage_path)
+            return self._public_url(storage_path)
+        except Exception as error:
+            logger.error("Failed to upload model: %s", str(error))
             raise
-    
+
     async def download_photo(self, photo_url: str, local_path: str) -> None:
-        """
-        Download a photo from Supabase Storage.
-        
-        Args:
-            photo_url: URL of the photo in storage
-            local_path: Local path to save the photo
-        """
+        """Download a photo by public URL or signed URL."""
         try:
-            # Extract storage path from URL
-            storage_path = photo_url.split('/storage/v1/object/public/')[-1]
-            bucket_name = storage_path.split('/')[0]
-            file_path = '/'.join(storage_path.split('/')[1:])
-            
-            response = self.client.storage.from_(bucket_name).download(file_path)
-            
-            with open(local_path, 'wb') as f:
-                f.write(response)
-            
-            logger.info(f"Photo downloaded to {local_path}")
-            
-        except Exception as e:
-            logger.error(f"Failed to download photo: {str(e)}")
+            response = requests.get(photo_url, timeout=60)
+            response.raise_for_status()
+
+            with open(local_path, "wb") as file:
+                file.write(response.content)
+
+            logger.info("Photo downloaded to %s", local_path)
+        except Exception as error:
+            logger.error("Failed to download photo: %s", str(error))
             raise
-    
+
     async def update_job_status(
         self,
         job_id: str,
         status: str,
         progress: int = 0,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
     ) -> None:
-        """
-        Update processing job status in database.
-        
-        Args:
-            job_id: Job ID
-            status: New status
-            progress: Progress percentage
-            error_message: Error message if failed
-        """
+        """Update processing job status in PostgreSQL."""
         try:
-            update_data = {
-                'status': status,
-                'progress': progress
-            }
-            
-            if error_message:
-                update_data['error_message'] = error_message
-            
-            if status == 'processing' and progress == 0:
-                update_data['started_at'] = 'now()'
-            elif status in ['completed', 'failed']:
-                update_data['completed_at'] = 'now()'
-            
-            self.client.table('processing_jobs').update(update_data).eq('id', job_id).execute()
-            
-            logger.info(f"Job {job_id} status updated to {status}")
-            
-        except Exception as e:
-            logger.error(f"Failed to update job status: {str(e)}")
+            started_at = None
+            completed_at = None
+            now = datetime.now(timezone.utc)
+
+            if status == "processing" and progress == 0:
+                started_at = now
+            elif status in ["completed", "failed"]:
+                completed_at = now
+
+            with self._connect() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        UPDATE processing_jobs
+                        SET status = %s,
+                            progress = %s,
+                            error_message = COALESCE(%s, error_message),
+                            started_at = COALESCE(%s, started_at),
+                            completed_at = COALESCE(%s, completed_at)
+                        WHERE id = %s
+                        """,
+                        (
+                            status,
+                            progress,
+                            error_message,
+                            started_at,
+                            completed_at,
+                            job_id,
+                        ),
+                    )
+
+            logger.info("Job %s status updated to %s", job_id, status)
+        except Exception as error:
+            logger.error("Failed to update job status: %s", str(error))
             raise
-    
+
     async def save_model_metadata(
         self,
         model_id: str,
@@ -118,38 +123,96 @@ class SupabaseStorage:
         model_type: str,
         storage_path: str,
         url: str,
-        processing_job_id: str
+        processing_job_id: str,
     ) -> None:
-        """
-        Save 3D model metadata to database.
-        
-        Args:
-            model_id: Model ID
-            project_id: Project ID
-            model_type: Type of model (gaussian-splatting or nerf)
-            storage_path: Path in storage
-            url: Public URL
-            processing_job_id: Associated job ID
-        """
+        """Save 3D model metadata to PostgreSQL."""
         try:
-            model_data = {
-                'id': model_id,
-                'project_id': project_id,
-                'model_type': model_type,
-                'storage_path': storage_path,
-                'url': url,
-                'is_original': True,
-                'processing_job_id': processing_job_id
-            }
-            
-            self.client.table('models_3d').insert(model_data).execute()
-            
-            logger.info(f"Model metadata saved for {model_id}")
-            
-        except Exception as e:
-            logger.error(f"Failed to save model metadata: {str(e)}")
+            with self._connect() as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        INSERT INTO models_3d (
+                            id,
+                            project_id,
+                            model_type,
+                            storage_path,
+                            url,
+                            is_original,
+                            processing_job_id,
+                            created_at
+                        ) VALUES (%s, %s, %s, %s, %s, true, %s, %s)
+                        """,
+                        (
+                            model_id,
+                            project_id,
+                            model_type,
+                            storage_path,
+                            url,
+                            processing_job_id,
+                            datetime.now(timezone.utc),
+                        ),
+                    )
+
+            logger.info("Model metadata saved for %s", model_id)
+        except Exception as error:
+            logger.error("Failed to save model metadata: %s", str(error))
             raise
 
+    async def create_job_record(self, job_id: str, project_id: str) -> None:
+        """Create processing job metadata in PostgreSQL."""
+        with self._connect() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO processing_jobs (
+                        id,
+                        job_type,
+                        project_id,
+                        status,
+                        progress,
+                        created_at
+                    ) VALUES (%s, 'scan', %s, 'pending', 0, %s)
+                    """,
+                    (job_id, project_id, datetime.now(timezone.utc)),
+                )
 
-# Global storage instance
-storage = SupabaseStorage()
+    async def get_job(self, job_id: str) -> dict:
+        """Get a processing job from PostgreSQL."""
+        with self._connect() as connection:
+            with connection.cursor(row_factory=psycopg.rows.dict_row) as cursor:
+                cursor.execute(
+                    """
+                    SELECT id, status, progress, error_message, started_at, completed_at
+                    FROM processing_jobs
+                    WHERE id = %s
+                    """,
+                    (job_id,),
+                )
+                job = cursor.fetchone()
+
+        if not job:
+            raise ValueError(f"Job {job_id} not found")
+
+        return dict(job)
+
+    async def get_model(self, model_id: str) -> dict:
+        """Get a model from PostgreSQL."""
+        with self._connect() as connection:
+            with connection.cursor(row_factory=psycopg.rows.dict_row) as cursor:
+                cursor.execute(
+                    """
+                    SELECT id, project_id, model_type, storage_path, url, created_at
+                    FROM models_3d
+                    WHERE id = %s
+                    """,
+                    (model_id,),
+                )
+                model = cursor.fetchone()
+
+        if not model:
+            raise ValueError(f"Model {model_id} not found")
+
+        return dict(model)
+
+
+storage = AppStorage()

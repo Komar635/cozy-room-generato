@@ -1,14 +1,10 @@
 """Modification Service for applying modifications to 3D models."""
 
+import asyncio
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional
-from app.models import (
-    ModificationRequest,
-    ModificationResponse,
-    ModificationJob,
-    Model3D,
-)
+from typing import Any, Dict, Optional
+from app.models import ModificationJob, ModificationRequest, ModificationResponse
 
 
 class ModificationService:
@@ -16,163 +12,127 @@ class ModificationService:
 
     def __init__(self):
         self._jobs: Dict[str, ModificationJob] = {}
-        self._models: Dict[str, Model3D] = {}
+        self._modifications: Dict[str, ModificationResponse] = {}
 
     async def apply_modification(
         self, request: ModificationRequest
     ) -> ModificationResponse:
-        """
-        Apply a modification to a 3D model.
+        """Apply a modification to a 3D model and return artifact metadata."""
+        if request.modification_type == "recolor":
+            return await self.apply_recolor(request)
 
-        Args:
-            request: Modification request with type and parameters
+        if request.modification_type == "restoration":
+            return await self.apply_restoration(request)
 
-        Returns:
-            ModificationResponse with new model details
+        return await self.apply_geometry_change(request)
 
-        Raises:
-            ValueError: If modification fails
-        """
-        job_id = str(uuid.uuid4())
+    async def apply_recolor(self, request: ModificationRequest) -> ModificationResponse:
+        """Apply recolor parameters to a model and create a new version."""
+        return await self._apply_modification(request)
+
+    async def apply_restoration(
+        self, request: ModificationRequest
+    ) -> ModificationResponse:
+        """Apply restoration parameters to a model and create a new version."""
+        return await self._apply_modification(request)
+
+    async def apply_geometry_change(
+        self, request: ModificationRequest
+    ) -> ModificationResponse:
+        """Apply geometry-change parameters to a model and create a new version."""
+        return await self._apply_modification(request)
+
+    async def _apply_modification(
+        self, request: ModificationRequest
+    ) -> ModificationResponse:
+        """Run the common modification workflow and return artifact metadata."""
+        job_id = request.job_id or str(uuid.uuid4())
+        modification_id = str(uuid.uuid4())
+        new_model_id = str(uuid.uuid4())
+        created_at = datetime.utcnow()
 
         job = ModificationJob(
             job_id=job_id,
             model_id=request.model_id,
             modification_type=request.modification_type,
             status="pending",
-            created_at=datetime.utcnow(),
+            progress=0,
+            created_at=created_at,
         )
         self._jobs[job_id] = job
 
         try:
             job.status = "processing"
-            job.progress = 10
+            job.progress = 20
+            await asyncio.sleep(0.1)
 
-            if request.modification_type == "recolor":
-                result = await self._apply_recolor(request)
-            elif request.modification_type == "restoration":
-                result = await self._apply_restoration(request)
-            elif request.modification_type == "geometry_change":
-                result = await self._apply_geometry_change(request)
-            else:
-                raise ValueError(
-                    f"Unknown modification type: {request.modification_type}"
-                )
+            result_parameters = self._build_result_parameters(request)
+            file_extension = self._get_file_extension(request.model_type)
+            storage_path = f"{request.project_id or 'projects'}/{new_model_id}-{request.modification_type}.{file_extension}"
+            url = self._build_artifact_url(storage_path)
 
             job.progress = 100
             job.status = "completed"
             job.completed_at = datetime.utcnow()
 
+            result = ModificationResponse(
+                job_id=job_id,
+                modification_id=modification_id,
+                new_model_id=new_model_id,
+                original_model_id=request.model_id,
+                modification_type=request.modification_type,
+                status="completed",
+                parameters=result_parameters,
+                storage_path=storage_path,
+                url=url,
+                model_type=request.model_type or "gaussian-splatting",
+                created_at=created_at,
+                completed_at=job.completed_at,
+            )
+            self._modifications[modification_id] = result
+
             return result
-        except Exception as e:
+        except Exception as error:
             job.status = "failed"
-            job.error_message = str(e)
-            raise ValueError(f"Modification failed: {str(e)}")
+            job.error_message = str(error)
+            job.completed_at = datetime.utcnow()
+            raise ValueError(f"Modification failed: {str(error)}")
 
-    async def _apply_recolor(
-        self, request: ModificationRequest
-    ) -> ModificationResponse:
-        """Apply recolor modification."""
-        modification_id = str(uuid.uuid4())
-        new_model_id = str(uuid.uuid4())
-
-        color_map = request.parameters.get("color_map", {})
-        finish = request.parameters.get("finish")
-
-        new_model = Model3D(
-            id=new_model_id,
-            project_id="",
-            version=1,
-            format="glb",
-            created_at=datetime.utcnow(),
-            modified_at=datetime.utcnow(),
-        )
-        self._models[new_model_id] = new_model
-
-        return ModificationResponse(
-            modification_id=modification_id,
-            new_model_id=new_model_id,
-            original_model_id=request.model_id,
-            modification_type=request.modification_type,
-            status="completed",
-            parameters={
+    def _build_result_parameters(self, request: ModificationRequest) -> Dict[str, Any]:
+        if request.modification_type == "recolor":
+            color_map = request.parameters.get("color_map", {})
+            return {
                 "color_map": color_map,
-                "finish": finish,
+                "finish": request.parameters.get("finish"),
                 "applied_colors": list(color_map.values()),
-            },
-            created_at=datetime.utcnow(),
-        )
+            }
 
-    async def _apply_restoration(
-        self, request: ModificationRequest
-    ) -> ModificationResponse:
-        """Apply restoration modification."""
-        modification_id = str(uuid.uuid4())
-        new_model_id = str(uuid.uuid4())
-
-        damaged_regions = request.parameters.get("damaged_regions", [])
-        restoration_style = request.parameters.get("restoration_style", "preserved")
-
-        new_model = Model3D(
-            id=new_model_id,
-            project_id="",
-            version=1,
-            format="glb",
-            created_at=datetime.utcnow(),
-            modified_at=datetime.utcnow(),
-        )
-        self._models[new_model_id] = new_model
-
-        return ModificationResponse(
-            modification_id=modification_id,
-            new_model_id=new_model_id,
-            original_model_id=request.model_id,
-            modification_type=request.modification_type,
-            status="completed",
-            parameters={
+        if request.modification_type == "restoration":
+            damaged_regions = request.parameters.get("damaged_regions", [])
+            return {
                 "damaged_regions": damaged_regions,
-                "restoration_style": restoration_style,
+                "restoration_style": request.parameters.get(
+                    "restoration_style", "preserved"
+                ),
                 "restored_areas": damaged_regions,
-            },
-            created_at=datetime.utcnow(),
-        )
+            }
 
-    async def _apply_geometry_change(
-        self, request: ModificationRequest
-    ) -> ModificationResponse:
-        """Apply geometry change modification."""
-        modification_id = str(uuid.uuid4())
-        new_model_id = str(uuid.uuid4())
+        return {
+            "modification_description": request.parameters.get(
+                "modification_description", ""
+            ),
+            "scale_factor": request.parameters.get("scale_factor"),
+            "dimensions": request.parameters.get("dimensions"),
+        }
 
-        modification_description = request.parameters.get(
-            "modification_description", ""
-        )
-        scale_factor = request.parameters.get("scale_factor")
-        dimensions = request.parameters.get("dimensions")
+    def _build_artifact_url(self, storage_path: str) -> str:
+        return f"https://example.com/generated-models/{storage_path}"
 
-        new_model = Model3D(
-            id=new_model_id,
-            project_id="",
-            version=1,
-            format="glb",
-            created_at=datetime.utcnow(),
-            modified_at=datetime.utcnow(),
-        )
-        self._models[new_model_id] = new_model
+    def _get_file_extension(self, model_type: Optional[str]) -> str:
+        if model_type == "nerf":
+            return "nerf"
 
-        return ModificationResponse(
-            modification_id=modification_id,
-            new_model_id=new_model_id,
-            original_model_id=request.model_id,
-            modification_type=request.modification_type,
-            status="completed",
-            parameters={
-                "modification_description": modification_description,
-                "scale_factor": scale_factor,
-                "dimensions": dimensions,
-            },
-            created_at=datetime.utcnow(),
-        )
+        return "ply"
 
     async def get_job_status(self, job_id: str) -> ModificationJob:
         """Get status of a modification job."""
@@ -183,8 +143,8 @@ class ModificationService:
     async def get_modification(
         self, modification_id: str
     ) -> Optional[ModificationResponse]:
-        """Get modification details by ID (placeholder - would query DB in real implementation)."""
-        return None
+        """Get modification details by ID."""
+        return self._modifications.get(modification_id)
 
 
 modification_service = ModificationService()

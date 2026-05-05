@@ -167,6 +167,19 @@ CREATE POLICY "Users can view style analyses" ON style_analyses
         )
     );
 
+-- Политики для processing_jobs: пользователи видят прогресс задач своих проектов
+CREATE POLICY "Users can view processing jobs of own projects" ON processing_jobs
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM projects
+            WHERE projects.id = processing_jobs.project_id
+            AND projects.user_id = auth.uid()
+        )
+    );
+
+-- Включаем Realtime для обновлений прогресса обработки
+ALTER PUBLICATION supabase_realtime ADD TABLE processing_jobs;
+
 -- Функция для автоматического обновления updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$

@@ -1,147 +1,227 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/nextauth';
-import { supabaseAdmin } from '@/lib/supabase/server';
+import { type NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/nextauth";
+import {
+	createAppError,
+	errorResponse,
+	requireNonEmptyString,
+	statusToErrorCode,
+	withRetry,
+} from "@/lib/errors";
+import { logError } from "@/lib/errors/logger";
+import { preserveCriticalState } from "@/lib/errors/state";
+import { prisma } from "@/lib/prisma";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const client = supabaseAdmin;
-    if (!client) {
-      return NextResponse.json(
-        { error: 'Supabase not configured' },
-        { status: 500 }
-      );
-    }
+function getPhotogrammetryServiceUrl() {
+	const baseUrl = process.env.PHOTOGRAMMETRY_SERVICE_URL;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+	if (!baseUrl) {
+		throw createAppError(
+			"scanning",
+			"SERVICE_UNAVAILABLE",
+			"PHOTOGRAMMETRY_SERVICE_URL is not configured",
+		);
+	}
 
-    const projectId = params.id;
-
-    const { data: project, error: projectError } = await client
-      .from('projects')
-      .select('id, user_id, status')
-      .eq('id', projectId)
-      .single();
-
-    if (projectError || !project) {
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      );
-    }
-
-    if (project.user_id !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
-    }
-
-    const { data: photos, error: photosError } = await client
-      .from('photos')
-      .select('id')
-      .eq('project_id', projectId);
-
-    if (photosError || !photos || photos.length < 10) {
-      return NextResponse.json(
-        { 
-          error: 'Insufficient photos',
-          message: 'Необходимо минимум 10 фотографий для сканирования'
-        },
-        { status: 400 }
-      );
-    }
-
-    const jobId = `scan_${projectId}_${Date.now()}`;
-    const { data: job, error: jobError } = await client
-      .from('processing_jobs')
-      .insert({
-        id: jobId,
-        job_type: 'scan',
-        project_id: projectId,
-        status: 'pending',
-        progress: 0,
-        started_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (jobError) {
-      return NextResponse.json(
-        { error: 'Failed to create processing job' },
-        { status: 500 }
-      );
-    }
-
-    await client
-      .from('projects')
-      .update({ status: 'scanning' })
-      .eq('id', projectId);
-
-    simulateScanning(client, jobId, projectId);
-
-    return NextResponse.json({
-      jobId: job.id,
-      status: job.status,
-      progress: job.progress,
-      message: 'Сканирование запущено'
-    });
-  } catch (error) {
-    console.error('Error starting scan:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+	return baseUrl.replace(/\/$/, "");
 }
 
-async function simulateScanning(client: NonNullable<typeof supabaseAdmin>, jobId: string, projectId: string) {
-  const intervals = [10, 25, 40, 55, 70, 85, 95, 100];
-  
-  for (const progress of intervals) {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    await client
-      .from('processing_jobs')
-      .update({ 
-        status: progress === 100 ? 'completed' : 'processing',
-        progress 
-      })
-      .eq('id', jobId);
-    
-    if (progress === 100) {
-      await client
-        .from('models_3d')
-        .insert({
-          project_id: projectId,
-          model_type: 'gaussian-splatting',
-          storage_path: `models/${projectId}/model.ply`,
-          url: `https://example.com/models/${projectId}/model.ply`,
-          is_original: true,
-          processing_job_id: jobId
-        });
-      
-      await client
-        .from('projects')
-        .update({ 
-          status: 'ready',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', projectId);
-      
-      await client
-        .from('processing_jobs')
-        .update({ completed_at: new Date().toISOString() })
-        .eq('id', jobId);
-    }
-  }
+function getErrorMessage(payload: unknown, fallback: string) {
+	if (typeof payload === "string") {
+		return payload;
+	}
+
+	if (payload && typeof payload === "object") {
+		const maybePayload = payload as {
+			error?: string;
+			message?: string;
+			detail?:
+				| string
+				| { error_type?: string; message?: string; recommendations?: string[] };
+		};
+
+		if (typeof maybePayload.message === "string") {
+			return maybePayload.message;
+		}
+
+		if (typeof maybePayload.error === "string") {
+			return maybePayload.error;
+		}
+
+		if (typeof maybePayload.detail === "string") {
+			return maybePayload.detail;
+		}
+
+		if (
+			maybePayload.detail &&
+			typeof maybePayload.detail === "object" &&
+			typeof maybePayload.detail.message === "string"
+		) {
+			return maybePayload.detail.message;
+		}
+	}
+
+	return fallback;
+}
+
+function getErrorCode(payload: unknown, fallback: string) {
+	if (!payload || typeof payload !== "object") {
+		return fallback;
+	}
+
+	const maybePayload = payload as {
+		error?: string;
+		detail?: string | { error_type?: string };
+	};
+
+	if (typeof maybePayload.error === "string") {
+		return maybePayload.error;
+	}
+
+	if (
+		maybePayload.detail &&
+		typeof maybePayload.detail === "object" &&
+		typeof maybePayload.detail.error_type === "string"
+	) {
+		return maybePayload.detail.error_type;
+	}
+
+	return fallback;
+}
+
+export async function POST(
+	_request: NextRequest,
+	{ params }: { params: { id: string } },
+) {
+	try {
+		const session = await getServerSession(authOptions);
+		if (!session?.user?.id) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		const projectId = requireNonEmptyString(params.id, "projectId", "scanning");
+
+		const project = await prisma.project.findFirst({
+			where: { id: projectId, userId: session.user.id },
+			select: { id: true, status: true },
+		});
+
+		if (!project) {
+			return NextResponse.json({ error: "Project not found" }, { status: 404 });
+		}
+
+		const photos = await prisma.photo.findMany({
+			where: { projectId },
+			select: { id: true, url: true },
+			orderBy: { uploadedAt: "asc" },
+		});
+
+		if (photos.length < 10) {
+			const error = createAppError(
+				"scanning",
+				"INSUFFICIENT_PHOTOS",
+				"Необходимо минимум 10 фотографий для сканирования",
+				{ context: { projectId, photoCount: photos.length } },
+			);
+			logError(error, { route: "POST /api/projects/[id]/scan" });
+
+			return NextResponse.json(errorResponse(error), { status: 400 });
+		}
+
+		await prisma.project.update({
+			where: { id: projectId },
+			data: { status: "scanning" },
+		});
+
+		const serviceResponse = await withRetry(
+			async () => {
+				const response = await fetch(`${getPhotogrammetryServiceUrl()}/scan`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						project_id: projectId,
+						photo_urls: photos.map((photo) => photo.url),
+						output_format: "gaussian-splatting",
+					}),
+				});
+
+				if (
+					response.status === 408 ||
+					response.status === 429 ||
+					response.status >= 500
+				) {
+					throw createAppError(
+						"network",
+						statusToErrorCode(response.status),
+						`Photogrammetry service failed with ${response.status}`,
+					);
+				}
+
+				return response;
+			},
+			{ attempts: 2, delayMs: 200 },
+		);
+
+		const payload = await serviceResponse.json().catch(() => null);
+
+		if (!serviceResponse.ok) {
+			const scanError = createAppError(
+				"scanning",
+				statusToErrorCode(serviceResponse.status),
+				getErrorMessage(payload, "Не удалось запустить реальное сканирование"),
+				{ context: { projectId, payload } },
+			);
+			logError(scanError, { route: "POST /api/projects/[id]/scan" });
+
+			await prisma.project.update({
+				where: { id: projectId },
+				data: { status: "error" },
+			});
+
+			return NextResponse.json(
+				{
+					...errorResponse(scanError),
+					serviceError: getErrorCode(payload, "Failed to start scan"),
+				},
+				{ status: serviceResponse.status },
+			);
+		}
+
+		return NextResponse.json({
+			jobId:
+				payload && typeof payload === "object" && "job_id" in payload
+					? payload.job_id
+					: null,
+			status:
+				payload && typeof payload === "object" && "status" in payload
+					? payload.status
+					: "pending",
+			progress: 0,
+			message: getErrorMessage(payload, "Сканирование запущено"),
+		});
+	} catch (error) {
+		logError(error, {
+			route: "POST /api/projects/[id]/scan",
+			projectId: params.id,
+		});
+		await preserveCriticalState(error, {
+			projectId: params.id,
+			operation: "scan",
+			status: "failed",
+		});
+		return NextResponse.json(
+			errorResponse(
+				error instanceof Error
+					? error
+					: createAppError(
+							"scanning",
+							"UNKNOWN_ERROR",
+							"Internal server error",
+						),
+			),
+			{ status: 500 },
+		);
+	}
 }

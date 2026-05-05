@@ -40,6 +40,7 @@ model Project {
   models3d    Model3D[]
   processingJobs ProcessingJob[]
 
+  @@index([userId])
   @@map("projects")
 }
 
@@ -54,6 +55,7 @@ model Photo {
   // Связи
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  @@index([projectId])
   @@map("photos")
 }
 
@@ -75,7 +77,10 @@ model Model3D {
   styleAnalyses   StyleAnalysis[]
   modifications   Modification[] @relation("OriginalModel")
   modifiedModels  Modification[] @relation("ModifiedModel")
+  suggestions      ModificationSuggestion[]
 
+  @@index([projectId])
+  @@index([parentModelId])
   @@map("models_3d")
 }
 
@@ -103,6 +108,9 @@ model ModificationSuggestion {
   previewUrl       String?  @map("preview_url")
   createdAt        DateTime @default(now()) @map("created_at")
 
+  model Model3D @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId])
   @@map("modification_suggestions")
 }
 
@@ -122,6 +130,8 @@ model Modification {
   modifiedModel  Model3D? @relation("ModifiedModel", fields: [modifiedModelId], references: [id], onDelete: Cascade)
   materialSpecs  MaterialSpecification[]
 
+  @@index([originalModelId])
+  @@index([modifiedModelId])
   @@map("modifications")
 }
 
@@ -135,6 +145,7 @@ model MaterialSpecification {
   // Связи
   modification Modification @relation(fields: [modificationId], references: [id], onDelete: Cascade)
 
+  @@index([modificationId])
   @@map("material_specifications")
 }
 
@@ -152,5 +163,8 @@ model ProcessingJob {
   // Связи
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  @@index([projectId])
+  @@index([status])
+  @@index([jobType, projectId, createdAt])
   @@map("processing_jobs")
 }

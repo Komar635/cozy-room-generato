@@ -60,6 +60,28 @@ class GeometryParameters(BaseModel):
     dimensions: Optional[Dict[str, float]] = None
 
 
+class MaterialSpecItem(BaseModel):
+    """A concrete material line item for restoration or modification."""
+    name: str
+    brand: str
+    code: str
+    quantity: str
+    application_area: str
+    finish: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class MaterialSpecification(BaseModel):
+    """Generated material specification for a model modification."""
+    id: str
+    modification_id: str
+    materials: List[MaterialSpecItem]
+    instructions: str
+    estimated_coverage: Optional[str] = None
+    safety_notes: List[str] = Field(default_factory=list)
+    created_at: datetime
+
+
 class ErrorResponse(BaseModel):
     """Error response."""
     error: str

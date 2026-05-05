@@ -9,6 +9,8 @@ from .config import settings
 from .models import (
     StyleAnalysis,
     ModificationSuggestion,
+    MaterialSpecItem,
+    MaterialSpecification,
     RecolorParameters,
     RestorationParameters,
     GeometryParameters,
@@ -130,6 +132,85 @@ Focus on:
             suggestions.append(suggestion)
         
         return suggestions
+
+    async def generate_material_spec(
+        self,
+        style_analysis: StyleAnalysis,
+        modification_id: str,
+        modification_type: str,
+        parameters: Dict[str, Any] | None = None,
+    ) -> MaterialSpecification:
+        """
+        Generate concrete material specification based on analysis and modification.
+
+        Args:
+            style_analysis: The style analysis result
+            modification_id: ID of the modification
+            modification_type: Type of modification to specify materials for
+            parameters: Modification parameters from API or DB
+
+        Returns:
+            MaterialSpecification with concrete material names, brands, codes and instructions
+
+        Raises:
+            ValueError: If material specification generation fails
+        """
+        prompt = f"""Based on this furniture/decor style analysis and planned modification, generate a practical material specification.
+
+Style: {style_analysis.style_description}
+Current Colors: {', '.join(style_analysis.dominant_colors)}
+Materials: {', '.join(style_analysis.materials)}
+Style Tags: {', '.join(style_analysis.style_tags)}
+Modification Type: {modification_type}
+Parameters: {json.dumps(parameters or {}, ensure_ascii=False)}
+
+Return your response as a JSON object:
+{{
+    "materials": [
+        {{
+            "name": "specific material product name",
+            "brand": "realistic supplier or brand name",
+            "code": "SKU or color/material code",
+            "quantity": "amount with unit",
+            "application_area": "where it is applied on the object",
+            "finish": "matte|satin|glossy|natural|textured",
+            "notes": "short practical note"
+        }}
+    ],
+    "instructions": "step-by-step application recommendations",
+    "estimated_coverage": "coverage or usable area estimate",
+    "safety_notes": ["safety note 1", "safety note 2"]
+}}
+
+Generate 2-6 concrete material line items with names, brands, codes and quantities."""
+
+        response = self.model.generate_content(prompt)
+
+        try:
+            response_text = response.text.strip()
+            if response_text.startswith("```json"):
+                response_text = response_text[7:]
+            if response_text.endswith("```"):
+                response_text = response_text[:-3]
+            response_text = response_text.strip()
+
+            data = json.loads(response_text)
+            raw_materials = data.get("materials") or []
+            if not raw_materials or not data.get("instructions"):
+                raise ValueError("Missing materials or instructions")
+
+            materials = [MaterialSpecItem(**material) for material in raw_materials]
+            return MaterialSpecification(
+                id=str(uuid.uuid4()),
+                modification_id=modification_id,
+                materials=materials,
+                instructions=data["instructions"],
+                estimated_coverage=data.get("estimated_coverage"),
+                safety_notes=data.get("safety_notes") or [],
+                created_at=datetime.utcnow(),
+            )
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:
+            raise ValueError(f"Failed to parse material specification: {str(e)}")
     
     async def _generate_recolor_suggestion(
         self,

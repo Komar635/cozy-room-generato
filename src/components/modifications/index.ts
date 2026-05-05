@@ -1,1 +1,1 @@
-export { ModificationPanel } from './ModificationPanel';
+export { ModificationPanel } from "./ModificationPanel";

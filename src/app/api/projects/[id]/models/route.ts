@@ -1,77 +1,76 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/nextauth';
-import { supabaseAdmin } from '@/lib/supabase/server';
+import { type NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { serializeModel3D } from "@/lib/api/serializers";
+import { authOptions } from "@/lib/auth/nextauth";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+	_request: NextRequest,
+	{ params }: { params: { id: string } },
 ) {
-  try {
-    const client = supabaseAdmin;
-    if (!client) {
-      return NextResponse.json(
-        { error: 'Supabase not configured' },
-        { status: 500 }
-      );
-    }
+	try {
+		const session = await getServerSession(authOptions);
+		if (!session?.user?.id) {
+			return NextResponse.json(
+				{ error: "Необходима авторизация" },
+				{ status: 401 },
+			);
+		}
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Необходима авторизация' },
-        { status: 401 }
-      );
-    }
+		const projectId = params.id;
 
-    const projectId = params.id;
+		const project = await prisma.project.findFirst({
+			where: { id: projectId, userId: session.user.id },
+			select: { id: true },
+		});
 
-    const { data: project, error: projectError } = await client
-      .from('projects')
-      .select('id, user_id')
-      .eq('id', projectId)
-      .single();
+		if (!project) {
+			return NextResponse.json({ error: "Проект не найден" }, { status: 404 });
+		}
 
-    if (projectError || !project) {
-      return NextResponse.json(
-        { error: 'Проект не найден' },
-        { status: 404 }
-      );
-    }
+		const models = await prisma.model3D.findMany({
+			where: { projectId },
+			orderBy: { createdAt: "desc" },
+		});
 
-    if (project.user_id !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Нет доступа к этому проекту' },
-        { status: 403 }
-      );
-    }
+		const modelIds = models.map((model) => model.id);
+		const latestModification =
+			modelIds.length > 0
+				? await prisma.modification.findFirst({
+						where: {
+							OR: [
+								{ originalModelId: { in: modelIds } },
+								{ modifiedModelId: { in: modelIds } },
+							],
+						},
+						orderBy: { createdAt: "desc" },
+					})
+				: null;
 
-    const { data: models, error: modelsError } = await client
-      .from('models_3d')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: false });
-
-    if (modelsError) {
-      console.error('Ошибка получения моделей проекта:', modelsError);
-      return NextResponse.json(
-        { error: 'Не удалось получить модели проекта' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        models: models || [],
-        latestModel: models?.[0] ?? null,
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Ошибка в GET /api/projects/[id]/models:', error);
-    return NextResponse.json(
-      { error: 'Внутренняя ошибка сервера' },
-      { status: 500 }
-    );
-  }
+		return NextResponse.json(
+			{
+				models: models.map(serializeModel3D),
+				latestModel: models[0] ? serializeModel3D(models[0]) : null,
+				latestModification: latestModification
+					? {
+							id: latestModification.id,
+							originalModelId: latestModification.originalModelId,
+							modifiedModelId: latestModification.modifiedModelId,
+							modificationType: latestModification.modificationType,
+							status: latestModification.status,
+							createdAt: latestModification.createdAt.toISOString(),
+							completedAt:
+								latestModification.completedAt?.toISOString() ?? null,
+						}
+					: null,
+			},
+			{ status: 200 },
+		);
+	} catch (error) {
+		console.error("Ошибка в GET /api/projects/[id]/models:", error);
+		return NextResponse.json(
+			{ error: "Внутренняя ошибка сервера" },
+			{ status: 500 },
+		);
+	}
 }

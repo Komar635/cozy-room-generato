@@ -1,0 +1,20 @@
+services:
+  photogrammetry:
+    build:
+      context: ./services/photogrammetry
+      dockerfile: Dockerfile
+    env_file:
+      - ./services/photogrammetry/.env
+    environment:
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8001
+      COLMAP_BIN: colmap
+    ports:
+      - "8001:8001"
+    volumes:
+      - photogrammetry_tmp:/tmp/photogrammetry
+    profiles:
+      - photogrammetry
+
+volumes:
+  photogrammetry_tmp:

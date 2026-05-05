@@ -1,120 +1,112 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/nextauth';
-import { getStyleAnalysisService } from '@/lib/ai/style-analysis';
+import { type NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { getStyleAnalysisService } from "@/lib/ai/style-analysis";
+import { authOptions } from "@/lib/auth/nextauth";
+import { prisma } from "@/lib/prisma";
 
 /**
  * POST /api/models/[id]/analyze
  * Trigger style analysis for a 3D model using Google Gemini
  */
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+	_request: NextRequest,
+	{ params }: { params: { id: string } },
 ) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+	try {
+		const session = await getServerSession(authOptions);
 
-    const modelId = params.id;
+		if (!session?.user?.email) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
 
-    // Verify model exists and user has access
-    const model = await prisma.model3D.findUnique({
-      where: { id: modelId },
-      include: {
-        project: {
-          select: {
-            userId: true,
-            photos: {
-              select: {
-                url: true,
-              },
-              take: 1, // Use first photo for analysis
-            },
-          },
-        },
-      },
-    });
+		const modelId = params.id;
 
-    if (!model) {
-      return NextResponse.json(
-        { error: 'Model not found' },
-        { status: 404 }
-      );
-    }
+		// Verify model exists and user has access
+		const model = await prisma.model3D.findUnique({
+			where: { id: modelId },
+			include: {
+				project: {
+					select: {
+						userId: true,
+						photos: {
+							select: {
+								url: true,
+							},
+							take: 1, // Use first photo for analysis
+						},
+					},
+				},
+			},
+		});
 
-    // Get user
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
+		if (!model) {
+			return NextResponse.json({ error: "Model not found" }, { status: 404 });
+		}
 
-    if (!user || model.project.userId !== user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
-    }
+		// Get user
+		const user = await prisma.user.findUnique({
+			where: { email: session.user.email },
+		});
 
-    // Check if analysis already exists
-    const existingAnalysis = await prisma.styleAnalysis.findFirst({
-      where: { modelId },
-    });
+		if (!user || model.project.userId !== user.id) {
+			return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		}
 
-    if (existingAnalysis) {
-      return NextResponse.json(
-        {
-          message: 'Analysis already exists',
-          analysis: existingAnalysis,
-        },
-        { status: 200 }
-      );
-    }
+		// Check if analysis already exists
+		const existingAnalysis = await prisma.styleAnalysis.findFirst({
+			where: { modelId },
+		});
 
-    // Use model URL or first photo for analysis
-    const imageUrl = model.project.photos.length > 0 ? model.project.photos[0].url : null;
+		if (existingAnalysis) {
+			return NextResponse.json(
+				{
+					message: "Analysis already exists",
+					analysis: existingAnalysis,
+				},
+				{ status: 200 },
+			);
+		}
 
-    if (!imageUrl) {
-      return NextResponse.json(
-        { error: 'No image available for analysis' },
-        { status: 400 }
-      );
-    }
+		// Use model URL or first photo for analysis
+		const imageUrl =
+			model.project.photos.length > 0 ? model.project.photos[0].url : null;
 
-    // Perform style analysis using Google Gemini
-    const styleService = getStyleAnalysisService();
-    const analysisResult = await styleService.analyzeStyle(imageUrl);
+		if (!imageUrl) {
+			return NextResponse.json(
+				{ error: "No image available for analysis" },
+				{ status: 400 },
+			);
+		}
 
-    // Save analysis to database
-    const styleAnalysis = await prisma.styleAnalysis.create({
-      data: {
-        modelId,
-        styleDescription: analysisResult.styleDescription,
-        dominantColors: analysisResult.dominantColors,
-        materials: analysisResult.materials,
-        styleTags: analysisResult.styleTags,
-      },
-    });
+		// Perform style analysis using Google Gemini
+		const styleService = getStyleAnalysisService();
+		const analysisResult = await styleService.analyzeStyle(imageUrl);
 
-    return NextResponse.json({
-      message: 'Style analysis completed',
-      analysis: styleAnalysis,
-    });
-  } catch (error) {
-    console.error('Error analyzing style:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to analyze style',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
+		// Save analysis to database
+		const styleAnalysis = await prisma.styleAnalysis.create({
+			data: {
+				modelId,
+				styleDescription: analysisResult.styleDescription,
+				dominantColors: analysisResult.dominantColors,
+				materials: analysisResult.materials,
+				styleTags: analysisResult.styleTags,
+			},
+		});
+
+		return NextResponse.json({
+			message: "Style analysis completed",
+			analysis: styleAnalysis,
+		});
+	} catch (error) {
+		console.error("Error analyzing style:", error);
+		return NextResponse.json(
+			{
+				error: "Failed to analyze style",
+				details: error instanceof Error ? error.message : "Unknown error",
+			},
+			{ status: 500 },
+		);
+	}
 }
 
 /**
@@ -122,71 +114,59 @@ export async function POST(
  * Get style analysis results for a 3D model
  */
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+	_request: NextRequest,
+	{ params }: { params: { id: string } },
 ) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+	try {
+		const session = await getServerSession(authOptions);
 
-    const modelId = params.id;
+		if (!session?.user?.email) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
 
-    // Verify model exists and user has access
-    const model = await prisma.model3D.findUnique({
-      where: { id: modelId },
-      include: {
-        project: {
-          select: {
-            userId: true,
-          },
-        },
-      },
-    });
+		const modelId = params.id;
 
-    if (!model) {
-      return NextResponse.json(
-        { error: 'Model not found' },
-        { status: 404 }
-      );
-    }
+		// Verify model exists and user has access
+		const model = await prisma.model3D.findUnique({
+			where: { id: modelId },
+			include: {
+				project: {
+					select: {
+						userId: true,
+					},
+				},
+			},
+		});
 
-    // Get user
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
+		if (!model) {
+			return NextResponse.json({ error: "Model not found" }, { status: 404 });
+		}
 
-    if (!user || model.project.userId !== user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
-    }
+		// Get user
+		const user = await prisma.user.findUnique({
+			where: { email: session.user.email },
+		});
 
-    // Get latest analysis
-    const analysis = await prisma.styleAnalysis.findFirst({
-      where: { modelId },
-      orderBy: { analyzedAt: 'desc' },
-    });
+		if (!user || model.project.userId !== user.id) {
+			return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+		}
 
-    if (!analysis) {
-      return NextResponse.json(
-        { error: 'No analysis found' },
-        { status: 404 }
-      );
-    }
+		// Get latest analysis
+		const analysis = await prisma.styleAnalysis.findFirst({
+			where: { modelId },
+			orderBy: { analyzedAt: "desc" },
+		});
 
-    return NextResponse.json(analysis);
-  } catch (error) {
-    console.error('Error fetching analysis:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch analysis' },
-      { status: 500 }
-    );
-  }
+		if (!analysis) {
+			return NextResponse.json({ error: "No analysis found" }, { status: 404 });
+		}
+
+		return NextResponse.json(analysis);
+	} catch (error) {
+		console.error("Error fetching analysis:", error);
+		return NextResponse.json(
+			{ error: "Failed to fetch analysis" },
+			{ status: 500 },
+		);
+	}
 }

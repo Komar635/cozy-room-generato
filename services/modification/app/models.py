@@ -8,7 +8,10 @@ from datetime import datetime
 class ModificationRequest(BaseModel):
     """Request to apply a modification to a 3D model."""
 
+    job_id: Optional[str] = None
+    project_id: Optional[str] = None
     model_id: str
+    model_type: Optional[str] = None
     modification_type: Literal["recolor", "restoration", "geometry_change"]
     parameters: Dict[str, Any]
     preserve_original: bool = Field(
@@ -19,13 +22,18 @@ class ModificationRequest(BaseModel):
 class ModificationResponse(BaseModel):
     """Response after applying a modification."""
 
+    job_id: Optional[str] = None
     modification_id: str
     new_model_id: str
     original_model_id: str
     modification_type: str
     status: Literal["completed", "processing", "failed"]
     parameters: Dict[str, Any]
+    storage_path: Optional[str] = None
+    url: Optional[str] = None
+    model_type: Optional[str] = None
     created_at: datetime
+    completed_at: Optional[datetime] = None
 
 
 class ModificationJob(BaseModel):
